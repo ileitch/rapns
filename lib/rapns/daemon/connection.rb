@@ -1,3 +1,5 @@
+require "socket"
+
 module Rapns
   module Daemon
     class ConnectionError < StandardError; end

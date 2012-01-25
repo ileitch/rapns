@@ -16,7 +16,7 @@ describe Rapns::Notification do
     notification.device_token = "a" * 64
     notification.alert = "way too long!" * 100
     notification.valid?.should be_false
-    notification.errors[:base].include?("APN notification cannot be larger than 256 bytes. Try condensing your alert and device attributes.").should be_true
+    notification.errors[:base].should include("APN notification payload cannot be larger than 256 bytes. Try condensing your alert attribute.")
   end
 
   it "should default the sound to 1.aiff" do

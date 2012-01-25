@@ -16,7 +16,7 @@ describe Rapns::Notification do
     notification.device_token = "a" * 64
     notification.alert = "way too long!" * 100
     notification.valid?.should be_false
-    notification.errors[:base].include?("APN notification cannot be larger than 256 bytes. Try condensing your alert and device attributes.").should be_true
+    notification.errors[:base].should include("APN notification payload cannot be larger than 256 bytes. Try condensing your alert attribute.")
   end
 
   it "should default the sound to 1.aiff" do
@@ -128,5 +128,18 @@ describe Rapns::Notification, "bug #31" do
     notification.stub(:has_attribute? => false)
     notification.alert = "{\"one\":2}"
     notification.alert.should == {"one" => 2}
+  end
+end
+
+describe Rapns::Notification, "payload size limitation" do
+  it "should limit payload size to 256 bytes but not the entire packet" do
+    notification = Rapns::Notification.new do |n|
+      n.device_token = "a" * 64
+      n.alert = "a" * 210
+    end
+
+    notification.to_binary(:for_validation => true).size.should > 256
+    notification.payload_size.should < 256
+    notification.should be_valid
   end
 end

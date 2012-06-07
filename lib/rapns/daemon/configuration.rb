@@ -6,7 +6,7 @@ module Rapns
   module Daemon
     class Configuration
       attr_accessor :push, :feedback
-      attr_accessor :certificate, :certificate_password, :airbrake_notify, :pid_file
+      attr_accessor :certificate, :certificate_password, :certificate_callback, :airbrake_notify, :pid_file
       alias_method  :airbrake_notify?, :airbrake_notify
 
       def initialize(environment, config_path)
@@ -31,6 +31,7 @@ module Rapns
         set_variable(:feedback, :poll, config, :optional => true, :default => 60)
 
         set_variable(nil, :certificate, config)
+        set_variable(nil, :certificate_callback, config)
         set_variable(nil, :airbrake_notify, config, :optional => true, :default => true)
         set_variable(nil, :certificate_password, config, :optional => true, :default => "")
         set_variable(nil, :pid_file, config, :optional => true, :default => "")

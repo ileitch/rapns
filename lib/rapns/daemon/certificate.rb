@@ -5,8 +5,13 @@ module Rapns
     class Certificate
       attr_accessor :certificate
 
-      def initialize(certificate_path)
-        @certificate_path = certificate_path
+      def initialize(certificate_path, options = {})
+        if options.has_key?(:data) && options[:data] == true
+          @certificate = certificate_path
+          @certificate_path = nil
+        else
+          @certificate_path = certificate_path
+        end
       end
 
       def load

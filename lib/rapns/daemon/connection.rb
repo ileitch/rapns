@@ -9,10 +9,16 @@ module Rapns
         30.minutes
       end
 
-      def initialize(name, host, port)
+      def initialize(name, host, port, options = {})
         @name = name
         @host = host
         @port = port
+        if options.has_key?(:certificate) && options[:certificate]
+          @certificate = options[:certificate]
+        else
+          @certificate = nil
+        end
+
         written
       end
 
@@ -88,9 +94,15 @@ module Rapns
       end
 
       def setup_ssl_context
+        if @certificate
+          certificate = @certificate.certificate
+        else
+          certificate = Rapns::Daemon.certificate.certificate
+        end
+
         ssl_context = OpenSSL::SSL::SSLContext.new
-        ssl_context.key = OpenSSL::PKey::RSA.new(Rapns::Daemon.certificate.certificate, Rapns::Daemon.configuration.certificate_password)
-        ssl_context.cert = OpenSSL::X509::Certificate.new(Rapns::Daemon.certificate.certificate)
+        ssl_context.key = OpenSSL::PKey::RSA.new(certificate, Rapns::Daemon.configuration.certificate_password)
+        ssl_context.cert = OpenSSL::X509::Certificate.new(certificate)
         ssl_context
       end
 

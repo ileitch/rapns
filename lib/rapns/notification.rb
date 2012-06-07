@@ -50,11 +50,17 @@ module Rapns
 
     def as_json
       json = ActiveSupport::OrderedHash.new
-      json['aps'] = ActiveSupport::OrderedHash.new
-      json['aps']['alert'] = alert if alert
-      json['aps']['badge'] = badge if badge
-      json['aps']['sound'] = sound if sound
-      attributes_for_device.each { |k, v| json[k.to_s] = v.to_s } if attributes_for_device
+
+      if (mdm.nil?)
+        json['aps'] = ActiveSupport::OrderedHash.new
+        json['aps']['alert'] = alert if alert
+        json['aps']['badge'] = badge if badge
+        json['aps']['sound'] = sound if sound
+        attributes_for_device.each { |k, v| json[k.to_s] = v.to_s } if attributes_for_device
+      else
+        json['mdm'] = mdm
+      end
+
       json
     end
 

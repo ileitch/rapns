@@ -1,6 +1,9 @@
 development:
   certificate: development.pem
   certificate_password:
+  # This value allows you to use other certificates which are stored in the database. The value of this parameter
+  # is a method name which will be called to evaluate the certificate. It has to return a string of
+  # certificate_callback: Tenant.evaluate_apn_certificate
 
   push:
     host: gateway.sandbox.push.apple.com
@@ -16,6 +19,8 @@ development:
 production:
   certificate: production.pem
   certificate_password:
+  # this value allows you to use other certificates which are stored in the database
+  # certificate_callback: Tenant.evaluate_apn_certificate
   airbrake_notify: true
   pid_file: tmp/pids/rapns.pid
 

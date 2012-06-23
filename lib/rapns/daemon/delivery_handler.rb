@@ -98,7 +98,8 @@ module Rapns
       def handle_next_notification
         begin
           notification = @queue.pop
-        rescue DeliveryQueue::WakeupError
+        rescue DeliveryQueue::WakeupError => e
+          Rapns::Daemon.logger.info(e)
           @connection.close
           return
         end

@@ -9,11 +9,13 @@ describe Rapns::Daemon::AppRunner do
   let(:feedback_config) { stub(:host => 'feedback.push.apple.com', :port => 2196, :poll => 60) }
   let(:runner) { Rapns::Daemon::AppRunner.new(app, push_config.host, push_config.port,
     feedback_config.host, feedback_config.port, feedback_config.poll) }
+  let(:config) { stub(:extra_debug => false) }
 
   before do
     Rapns::Daemon::DeliveryQueue.stub(:new => queue)
     Rapns::Daemon::FeedbackReceiver.stub(:new => receiver)
     Rapns::Daemon::DeliveryHandler.stub(:new => handler)
+    Rapns::Daemon.stub(:config => config)
   end
 
   after { Rapns::Daemon::AppRunner.all.clear }

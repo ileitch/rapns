@@ -99,7 +99,10 @@ module Rapns
         begin
           notification = @queue.pop
         rescue DeliveryQueue::WakeupError => e
-          Rapns::Daemon.logger.info(e)
+          if Rapns::Daemon.config.extra_debug
+            Rapns::Daemon.logger.info(e)
+          end
+
           @connection.close
           return
         end

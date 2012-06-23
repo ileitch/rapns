@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe Rapns::Daemon::Feeder do
   let(:poll) { 2 }
-  let(:config) { stub(:batch_size => 5000) }
+  let(:config) { stub(:batch_size => 5000, :extra_debug => false) }
   let(:notification) { Rapns::Notification.create!(:device_token => "a" * 64, :app => 'my_app') }
   let(:logger) { stub }
 

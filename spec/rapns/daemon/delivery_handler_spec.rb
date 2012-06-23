@@ -12,7 +12,7 @@ describe Rapns::Daemon::DeliveryHandler do
   let(:connection) { stub(:select => false, :write => nil, :reconnect => nil, :close => nil, :connect => nil) }
   let(:logger) { stub(:error => nil, :info => nil) }
   let(:notification) { stub.as_null_object }
-  let(:config) { stub(:check_for_errors => true) }
+  let(:config) { stub(:check_for_errors => true, :extra_debug => false) }
   let(:delivery_queues) { [] }
 
   before do

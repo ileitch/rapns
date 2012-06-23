@@ -1,4 +1,4 @@
-class AddKeyCertToRapnsApps < ActiveRecord::Migration
+class AddKeycertToRapnsApps < ActiveRecord::Migration
   def self.up
     add_column :rapns_apps, :keycert, :text, :null => true
   end

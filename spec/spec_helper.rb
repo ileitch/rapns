@@ -30,7 +30,7 @@ require 'generators/templates/create_rapns_apps'
 require 'generators/templates/add_keycert_to_rapns_apps'
 
 [CreateRapnsNotifications, CreateRapnsFeedback,
- AddAlertIsJsonToRapnsNotifications, AddAppToRapns, CreateRapnsApps, AddKeyCertToRapnsApps].each do |migration|
+ AddAlertIsJsonToRapnsNotifications, AddAppToRapns, CreateRapnsApps, AddKeycertToRapnsApps].each do |migration|
   migration.down rescue ActiveRecord::StatementInvalid
   migration.up
 end

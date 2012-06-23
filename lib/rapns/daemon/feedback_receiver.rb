@@ -5,12 +5,13 @@ module Rapns
 
       FEEDBACK_TUPLE_BYTES = 38
 
-      def initialize(app, host, port, poll, certificate, password)
+      def initialize(app, host, port, poll, certificate, keycert, password)
         @app = app
         @host = host
         @port = port
         @poll = poll
         @certificate = certificate
+        @keycert = keycert
         @password = password
       end
 
@@ -33,7 +34,7 @@ module Rapns
       def check_for_feedback
         connection = nil
         begin
-          connection = Connection.new("FeedbackReceiver:#{@app}", @host, @port, @certificate, @password)
+          connection = Connection.new("FeedbackReceiver:#{@app}", @host, @port, @certificate, @keycert, @password)
           connection.connect
 
           while tuple = connection.read(FEEDBACK_TUPLE_BYTES)

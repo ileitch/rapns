@@ -4,6 +4,7 @@ describe Rapns::Daemon::Connection do
   let(:ssl_context) { stub(:key= => nil, :cert= => nil) }
   let(:rsa_key) { stub }
   let(:certificate) { stub }
+  let(:keycert) { stub }
   let(:password) { stub }
   let(:x509_certificate) { stub }
   let(:host) { 'gateway.push.apple.com' }
@@ -11,7 +12,7 @@ describe Rapns::Daemon::Connection do
   let(:tcp_socket) { stub(:setsockopt => nil, :close => nil) }
   let(:ssl_socket) { stub(:sync= => nil, :connect => nil, :close => nil, :write => nil, :flush => nil) }
   let(:logger) { stub(:info => nil, :error => nil) }
-  let(:connection) { Rapns::Daemon::Connection.new('Connection 0', host, port, certificate, password) }
+  let(:connection) { Rapns::Daemon::Connection.new('Connection 0', host, port, certificate, keycert, password) }
 
   before do
     OpenSSL::SSL::SSLContext.stub(:new => ssl_context)
@@ -36,7 +37,7 @@ describe Rapns::Daemon::Connection do
 
   describe "when setting up the SSL context" do
     it "sets the key on the context" do
-      OpenSSL::PKey::RSA.should_receive(:new).with(certificate, password).and_return(rsa_key)
+      OpenSSL::PKey::RSA.should_receive(:new).with(keycert, password).and_return(rsa_key)
       ssl_context.should_receive(:key=).with(rsa_key)
       connection.connect
     end

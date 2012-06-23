@@ -6,8 +6,9 @@ describe Rapns::Daemon::DeliveryHandler do
   let(:host) { 'localhost' }
   let(:port) { 2195 }
   let(:certificate) { stub }
+  let(:keycert) { stub }
   let(:password) { stub }
-  let(:delivery_handler) { Rapns::Daemon::DeliveryHandler.new(queue, name, host, port, certificate, password) }
+  let(:delivery_handler) { Rapns::Daemon::DeliveryHandler.new(queue, name, host, port, certificate, keycert, password) }
   let(:connection) { stub(:select => false, :write => nil, :reconnect => nil, :close => nil, :connect => nil) }
   let(:logger) { stub(:error => nil, :info => nil) }
   let(:notification) { stub.as_null_object }
@@ -21,7 +22,7 @@ describe Rapns::Daemon::DeliveryHandler do
   end
 
   it "instantiates a new connection" do
-    Rapns::Daemon::Connection.should_receive(:new).with("DeliveryHandler:#{name}", host, port, certificate, password)
+    Rapns::Daemon::Connection.should_receive(:new).with("DeliveryHandler:#{name}", host, port, certificate, keycert, password)
     delivery_handler
   end
 

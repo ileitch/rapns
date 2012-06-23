@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Rapns::Daemon::AppRunner do
-  let(:app) { stub(:key => 'app', :certificate => 'cert', :password => '', :connections => 1) }
+  let(:app) { stub(:key => 'app', :certificate => 'cert', :keycert => 'keycert', :password => '', :connections => 1) }
   let(:queue) { stub(:notifications_processed? => true, :push => nil) }
   let(:receiver) { stub(:start => nil, :stop => nil) }
   let(:handler) { stub(:start => nil, :stop => nil) }
@@ -20,14 +20,14 @@ describe Rapns::Daemon::AppRunner do
 
   describe 'start' do
     it 'starts a feedback receiver' do
-      Rapns::Daemon::FeedbackReceiver.should_receive(:new).with(app.key, feedback_config.host, feedback_config.port, feedback_config.poll, app.certificate, app.password)
+      Rapns::Daemon::FeedbackReceiver.should_receive(:new).with(app.key, feedback_config.host, feedback_config.port, feedback_config.poll, app.certificate, app.keycert, app.password)
       receiver.should_receive(:start)
       runner.start
     end
 
     it 'starts a delivery handler for each connection' do
       Rapns::Daemon::DeliveryHandler.should_receive(:new).with(queue, app.key, push_config.host,
-        push_config.port, app.certificate, app.password)
+        push_config.port, app.certificate, app.keycert, app.password)
       handler.should_receive(:start)
       runner.start
     end
@@ -69,7 +69,7 @@ describe Rapns::Daemon::AppRunner do
   end
 
   describe 'sync' do
-    let(:new_app) { stub(:key => 'app', :certificate => 'cert', :password => '', :connections => 1) }
+    let(:new_app) { stub(:key => 'app', :certificate => 'cert', :keycert => 'keycert', :password => '', :connections => 1) }
     before { runner.start }
 
     it 'reduces the number of handlers if needed' do

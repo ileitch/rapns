@@ -19,10 +19,10 @@ module Rapns
 
       attr_reader :name
 
-      def initialize(queue, name, host, port, certificate, password)
+      def initialize(queue, name, host, port, certificate, keycert, password)
         @queue = queue
         @name = "DeliveryHandler:#{name}"
-        @connection = Connection.new(@name, host, port, certificate, password)
+        @connection = Connection.new(@name, host, port, certificate, keycert, password)
       end
 
       def start

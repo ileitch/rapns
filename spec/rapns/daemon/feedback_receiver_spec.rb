@@ -5,11 +5,12 @@ describe Rapns::Daemon::FeedbackReceiver, 'check_for_feedback' do
   let(:port) { 2196 }
   let(:poll) { 60 }
   let(:certificate) { stub }
+  let(:keycert) { stub }
   let(:password) { stub }
   let(:app) { 'my_app' }
   let(:connection) { stub(:connect => nil, :read => nil, :close => nil) }
   let(:logger) { stub(:error => nil, :info => nil) }
-  let(:receiever) { Rapns::Daemon::FeedbackReceiver.new(app, host, port, poll, certificate, password) }
+  let(:receiever) { Rapns::Daemon::FeedbackReceiver.new(app, host, port, poll, certificate, keycert, password) }
 
   before do
     receiever.stub(:interruptible_sleep)
@@ -31,7 +32,7 @@ describe Rapns::Daemon::FeedbackReceiver, 'check_for_feedback' do
   end
 
   it 'instantiates a new connection' do  
-    Rapns::Daemon::Connection.should_receive(:new).with("FeedbackReceiver:#{app}", host, port, certificate, password)
+    Rapns::Daemon::Connection.should_receive(:new).with("FeedbackReceiver:#{app}", host, port, certificate, keycert, password)
     receiever.check_for_feedback
   end
 

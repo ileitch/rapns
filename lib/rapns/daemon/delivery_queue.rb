@@ -12,7 +12,7 @@ module Rapns
 
       def push(notification)
         if Rapns::Daemon.config.extra_debug
-          Rapns::Daemon.logger.info('DeliveryQueue.push called with notification: %' % notification)
+          Rapns::Daemon.logger.info('DeliveryQueue.push called with notification: #{notification}')
         end
 
         @mutex.synchronize do

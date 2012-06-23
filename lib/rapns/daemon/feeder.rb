@@ -29,7 +29,7 @@ module Rapns
             ready_apps = Rapns::Daemon::AppRunner.ready
 
             if Rapns::Daemon.config.extra_debug
-              Rapns::Daemon.logger.info('Feeder.enqueue_notifications called. Ready apps: %', ready_apps)
+              Rapns::Daemon.logger.info('Feeder.enqueue_notifications called. Ready apps: %' % ready_apps)
             end
 
             batch_size = Rapns::Daemon.config.batch_size

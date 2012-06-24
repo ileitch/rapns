@@ -9,6 +9,12 @@ module Rapns
         @logger.auto_flushing = Rails.logger.respond_to?(:auto_flushing) ? Rails.logger.auto_flushing : true
       end
 
+      def debug(msg)
+        if Rapns::Daemon.config.extra_debug
+          log(:debug, msg)
+        end
+      end
+
       def info(msg)
         log(:info, msg)
       end

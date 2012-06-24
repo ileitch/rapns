@@ -32,9 +32,7 @@ module Rapns
         @thread = Thread.new do
           @thread.abort_on_exception = true
           loop do
-            if Rapns::Daemon.config.extra_debug
-              Rapns::Daemon.logger.info("#{@name} thread in loop.")
-            end
+            Rapns::Daemon.logger.debug("#{@name} thread in loop.")
 
             break if @stop
 
@@ -44,9 +42,7 @@ module Rapns
       end
 
       def stop
-        if Rapns::Daemon.config.extra_debug
-          Rapns::Daemon.logger.info("#{@name}.stop called.")
-        end
+        Rapns::Daemon.logger.debug("#{@name}.stop called.")
 
         @stop = true
         @queue.wakeup(@thread)
@@ -107,16 +103,12 @@ module Rapns
       end
 
       def handle_next_notification
-        if Rapns::Daemon.config.extra_debug
-          Rapns::Daemon.logger.info("#{@name}.handle_next_notification called.")
-        end
+        Rapns::Daemon.logger.debug("#{@name}.handle_next_notification called.")
 
         begin
           notification = @queue.pop
         rescue DeliveryQueue::WakeupError => e
-          if Rapns::Daemon.config.extra_debug
-            Rapns::Daemon.logger.info(e)
-          end
+          Rapns::Daemon.logger.debug(e)
 
           @connection.close
           return

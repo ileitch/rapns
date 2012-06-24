@@ -9,37 +9,27 @@ module Rapns
         @queue = []
         @waiting = []
 
-        if Rapns::Daemon.config.extra_debug
-          Rapns::Daemon.logger.info("New DeliveryQueue created.")
-        end
+        Rapns::Daemon.logger.debug("New DeliveryQueue created.")
       end
 
       def push(notification)
-        if Rapns::Daemon.config.extra_debug
-          Rapns::Daemon.logger.info("DeliveryQueue.push called with notification: #{notification}")
-        end
+        Rapns::Daemon.logger.debug("DeliveryQueue.push called with notification: #{notification}")
 
         @mutex.synchronize do
           @num_notifications += 1
           @queue.push(notification)
           
-          if Rapns::Daemon.config.extra_debug
-            Rapns::Daemon.logger.info("[push] @waiting.count: #{@waiting.count}")
-          end
+          Rapns::Daemon.logger.debug("[push] @waiting.count: #{@waiting.count}")
 
           begin
             t = @waiting.shift
             if t 
-              if Rapns::Daemon.config.extra_debug
-                Rapns::Daemon.logger.info("[push] waiting thread.status: #{t.status}")
-              end
+              Rapns::Daemon.logger.debug("[push] waiting thread.status: #{t.status}")
 
               t.wakeup
             end
           rescue ThreadError
-            if Rapns::Daemon.config.extra_debug
-              Rapns::Daemon.logger.info("ThreadError. Retrying.")
-            end
+            Rapns::Daemon.logger.debug("[push] ThreadError. Retrying.")
 
             retry
           end
@@ -47,27 +37,17 @@ module Rapns
       end
 
       def pop
-        if Rapns::Daemon.config.extra_debug
-          Rapns::Daemon.logger.info("DeliveryQueue.pop called.")
-        end
+        Rapns::Daemon.logger.debug("DeliveryQueue.pop called.")
 
         @mutex.synchronize do
           while true
-            if Rapns::Daemon.config.extra_debug
-              Rapns::Daemon.logger.info("[pop] @waiting.count: #{@waiting.count}")
-            end
+            Rapns::Daemon.logger.debug("[pop] @waiting.count: #{@waiting.count}")
 
             if @queue.empty?
               @waiting.push Thread.current
-              if Rapns::Daemon.config.extra_debug
-                Rapns::Daemon.logger.info("[pop] Thread sleeping.")
-              end
-
+              Rapns::Daemon.logger.debug("[pop] Thread sleeping.")
               @mutex.sleep
-
-              if Rapns::Daemon.config.extra_debug
-                Rapns::Daemon.logger.info("[pop] Thread awake.")
-              end
+              Rapns::Daemon.logger.debug("[pop] Thread awake.")
             else
               return @queue.shift
             end

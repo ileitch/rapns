@@ -111,9 +111,7 @@ module Rapns
       def start_handler
         handler = DeliveryHandler.new(@queue, @app.key, @push_host, @push_port, @app.certificate, @app.keycert, @app.password)
         handler.start
-        if Rapns::Daemon.config.extra_debug
-          Rapns::Daemon.logger.info("Handler #{handler} started.")
-        end
+        Rapns::Daemon.logger.debug("Handler #{handler} started.")
 
         handler
       end

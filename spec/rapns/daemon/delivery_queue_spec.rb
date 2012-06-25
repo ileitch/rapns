@@ -2,8 +2,13 @@ require "spec_helper"
 
 describe Rapns::Daemon::DeliveryQueue do
   let(:queue) { Rapns::Daemon::DeliveryQueue.new }
+  let(:config) { stub(:extra_debug => false) }
 
-  it 'behaves likes a normal qeue' do
+  before do
+    Rapns::Daemon.stub(:config => config)
+  end
+
+  it 'behaves likes a normal queue' do
     obj = stub
     queue.push obj
     queue.pop.should == obj

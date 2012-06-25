@@ -19,24 +19,31 @@ module Rapns
 
       attr_reader :name
 
-      def initialize(queue, name, host, port, certificate, password)
+      def initialize(queue, name, host, port, certificate, keycert, password)
         @queue = queue
         @name = "DeliveryHandler:#{name}"
-        @connection = Connection.new(@name, host, port, certificate, password)
+        @connection = Connection.new(@name, host, port, certificate, keycert, password)
       end
 
       def start
         @connection.connect
+        #@stop = false
 
         @thread = Thread.new do
+          #@thread.abort_on_exception = true
           loop do
+            Rapns::Daemon.logger.debug("#{@name} thread in loop.")
+
             break if @stop
+
             handle_next_notification
           end
         end
       end
 
       def stop
+        Rapns::Daemon.logger.debug("#{@name}.stop called.")
+
         @stop = true
         @queue.wakeup(@thread)
       end
@@ -96,9 +103,13 @@ module Rapns
       end
 
       def handle_next_notification
+        Rapns::Daemon.logger.debug("#{@name}.handle_next_notification called.")
+
         begin
           notification = @queue.pop
-        rescue DeliveryQueue::WakeupError
+        rescue DeliveryQueue::WakeupError => e
+          Rapns::Daemon.logger.debug(e)
+
           @connection.close
           return
         end

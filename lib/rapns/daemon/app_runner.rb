@@ -73,7 +73,7 @@ module Rapns
       end
 
       def start
-        @feedback_receiver = FeedbackReceiver.new(@app.key, @feedback_host, @feedback_port, @feedback_poll, @app.certificate, @app.password)
+        @feedback_receiver = FeedbackReceiver.new(@app.key, @feedback_host, @feedback_port, @feedback_poll, @app.certificate, @app.keycert, @app.password)
         @feedback_receiver.start
 
         @app.connections.times { @handlers << start_handler }
@@ -109,8 +109,10 @@ module Rapns
       protected
 
       def start_handler
-        handler = DeliveryHandler.new(@queue, @app.key, @push_host, @push_port, @app.certificate, @app.password)
+        handler = DeliveryHandler.new(@queue, @app.key, @push_host, @push_port, @app.certificate, @app.keycert, @app.password)
         handler.start
+        Rapns::Daemon.logger.debug("Handler #{handler} started.")
+
         handler
       end
     end

@@ -8,28 +8,48 @@ module Rapns
         @num_notifications = 0
         @queue = []
         @waiting = []
+
+        Rapns::Daemon.logger.debug("New DeliveryQueue created.")
       end
 
       def push(notification)
+        Rapns::Daemon.logger.debug("DeliveryQueue.push called with notification: #{notification}")
+
         @mutex.synchronize do
           @num_notifications += 1
           @queue.push(notification)
+          
+          Rapns::Daemon.logger.debug("[push] @waiting.count: #{@waiting.count}")
 
           begin
             t = @waiting.shift
-            t.wakeup if t
+            if t 
+              Rapns::Daemon.logger.debug("[push] waiting thread.status: #{t.status}")
+
+              t.wakeup
+              #wakeup(t)
+            end
           rescue ThreadError
+            Rapns::Daemon.logger.debug("[push] ThreadError. Retrying.")
+
             retry
           end
         end
       end
 
       def pop
+        Rapns::Daemon.logger.debug("DeliveryQueue.pop called.")
+
         @mutex.synchronize do
           while true
+            Rapns::Daemon.logger.debug("[pop] @waiting.count: #{@waiting.count}")
+
             if @queue.empty?
               @waiting.push Thread.current
+              Rapns::Daemon.logger.debug("[pop] Thread sleeping.")
               @mutex.sleep
+              #Thread.current.stop
+              Rapns::Daemon.logger.debug("[pop] Thread awake.")
             else
               return @queue.shift
             end

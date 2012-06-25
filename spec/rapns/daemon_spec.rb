@@ -5,7 +5,7 @@ describe Rapns::Daemon, "when starting" do
 
   let(:certificate) { stub }
   let(:password) { stub }
-  let(:config) { stub(:pid_file => nil, :push_poll => 2, :airbrake_notify => false, :foreground => true) }
+  let(:config) { stub(:pid_file => nil, :push_poll => 2, :airbrake_notify => false, :foreground => true, :extra_debug => false) }
   let(:logger) { stub(:info => nil, :error => nil) }
 
   before do

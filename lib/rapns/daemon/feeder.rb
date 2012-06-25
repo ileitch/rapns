@@ -27,6 +27,9 @@ module Rapns
         begin
           with_database_reconnect_and_retry do
             ready_apps = Rapns::Daemon::AppRunner.ready
+
+            Rapns::Daemon.logger.debug("Feeder.enqueue_notifications called. Ready apps: #{ready_apps}")
+
             batch_size = Rapns::Daemon.config.batch_size
             Rapns::Notification.ready_for_delivery.find_each(:batch_size => batch_size) do |notification|
               Rapns::Daemon::AppRunner.deliver(notification) if ready_apps.include?(notification.app)

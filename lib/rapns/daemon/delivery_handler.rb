@@ -27,10 +27,10 @@ module Rapns
 
       def start
         @connection.connect
-        @stop = false
+        #@stop = false
 
         @thread = Thread.new do
-          @thread.abort_on_exception = true
+          #@thread.abort_on_exception = true
           loop do
             Rapns::Daemon.logger.debug("#{@name} thread in loop.")
 

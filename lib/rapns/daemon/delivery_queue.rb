@@ -27,6 +27,7 @@ module Rapns
               Rapns::Daemon.logger.debug("[push] waiting thread.status: #{t.status}")
 
               t.wakeup
+              #wakeup(t)
             end
           rescue ThreadError
             Rapns::Daemon.logger.debug("[push] ThreadError. Retrying.")
@@ -47,6 +48,7 @@ module Rapns
               @waiting.push Thread.current
               Rapns::Daemon.logger.debug("[pop] Thread sleeping.")
               @mutex.sleep
+              #Thread.current.stop
               Rapns::Daemon.logger.debug("[pop] Thread awake.")
             else
               return @queue.shift

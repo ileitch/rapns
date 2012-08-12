@@ -13,17 +13,8 @@ class RapnsGenerator < Rails::Generators::Base
     add_rapns_migration('create_rapns_notifications')
     add_rapns_migration('create_rapns_feedback')
     add_rapns_migration('add_alert_is_json_to_rapns_notifications')
-<<<<<<< HEAD
-    add_rapns_migration('add_mdmsupport_to_rapns_notifications')
-    add_rapns_migration('add_certname_to_rapns_notifications')
-  end
-
-  def copy_config
-    copy_file 'rapns.yml', 'config/rapns/rapns.yml'
-=======
     add_rapns_migration('add_app_to_rapns')
     add_rapns_migration('create_rapns_apps')
->>>>>>> upstream/master
   end
 
   protected

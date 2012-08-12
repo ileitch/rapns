@@ -3,8 +3,7 @@ module Rapns
     class DeliveryHandler
       include DatabaseReconnectable
 
-      STOP = 0x666
-      SELECT_TIMEOUT = 0.5
+      SELECT_TIMEOUT = 0.2
       ERROR_TUPLE_BYTES = 6
       APN_ERRORS = {
         1 => "Processing error",
@@ -20,12 +19,10 @@ module Rapns
 
       attr_reader :name
 
-      def initialize(i)
-        @name = "DeliveryHandler #{i}"
-        host = Rapns::Daemon.configuration.push.host
-        port = Rapns::Daemon.configuration.push.port
-        @connections = Hash.new
-        create_connection("default", nil)
+      def initialize(queue, name, host, port, certificate, password)
+        @queue = queue
+        @name = "DeliveryHandler:#{name}"
+        @connection = Connection.new(@name, host, port, certificate, password)
       end
 
       def start
@@ -35,7 +32,7 @@ module Rapns
         # connect to
         defaultConnection.connect
 
-        Thread.new do
+        @thread = Thread.new do
           loop do
             break if @stop
             handle_next_notification
@@ -45,15 +42,15 @@ module Rapns
 
       def stop
         @stop = true
-        Rapns::Daemon.delivery_queue.push(STOP)
+        @queue.wakeup(@thread)
       end
 
       protected
 
       def deliver(notification, connection)
         begin
-          connection.write(notification.to_binary)
-          check_for_error(connection)
+          @connection.write(notification.to_binary)
+          check_for_error if Rapns::Daemon.config.check_for_errors
 
           with_database_reconnect_and_retry do
             notification.delivered = true
@@ -61,7 +58,7 @@ module Rapns
             notification.save!(:validate => false)
           end
 
-          Rapns::Daemon.logger.info("Notification #{notification.id} delivered to #{notification.device_token}")
+          Rapns::Daemon.logger.info("[#{@name}] #{notification.id} sent to #{notification.device_token}")
         rescue Rapns::DeliveryError, Rapns::DisconnectionError => error
           handle_delivery_error(notification, error)
           raise
@@ -157,10 +154,10 @@ module Rapns
       end
 
       def handle_next_notification
-        notification = Rapns::Daemon.delivery_queue.pop
-
-        if notification == STOP
-          close_connections
+        begin
+          notification = @queue.pop
+        rescue DeliveryQueue::WakeupError
+          @connection.close
           return
         end
 
@@ -170,7 +167,7 @@ module Rapns
         rescue StandardError => e
           Rapns::Daemon.logger.error(e)
         ensure
-          Rapns::Daemon.delivery_queue.notification_processed
+          @queue.notification_processed
         end
       end
     end

@@ -1,66 +1,79 @@
 require 'thread'
 require 'socket'
 require 'pathname'
+require 'openssl'
 
 require 'rapns/daemon/interruptible_sleep'
-require 'rapns/daemon/configuration'
-require 'rapns/daemon/certificate'
 require 'rapns/daemon/delivery_error'
 require 'rapns/daemon/disconnection_error'
-require 'rapns/daemon/pool'
 require 'rapns/daemon/connection'
 require 'rapns/daemon/database_reconnectable'
 require 'rapns/daemon/delivery_queue'
 require 'rapns/daemon/delivery_handler'
 require 'rapns/daemon/delivery_handler_pool'
 require 'rapns/daemon/feedback_receiver'
+require 'rapns/daemon/app_runner'
 require 'rapns/daemon/feeder'
 require 'rapns/daemon/logger'
 
 module Rapns
   module Daemon
+    extend DatabaseReconnectable
+
     class << self
-      attr_accessor :logger, :configuration, :certificate,
-        :delivery_queue, :delivery_handler_pool, :foreground
-      alias_method  :foreground?, :foreground
+      attr_accessor :logger, :config
     end
 
-    def self.start(environment, foreground)
-      @foreground = foreground
+    def self.start(config)
+      self.config = config
+      self.logger = Logger.new(:foreground => config.foreground, :airbrake_notify => config.airbrake_notify)
       setup_signal_hooks
 
-      self.configuration = Configuration.new(environment, File.join(Rails.root, 'config', 'rapns', 'rapns.yml'))
-      configuration.load
-
-      self.logger = Logger.new(:foreground => foreground, :airbrake_notify => configuration.airbrake_notify)
-
-      self.certificate = Certificate.new(configuration.certificate)
-      certificate.load
-
-      self.delivery_queue = DeliveryQueue.new
-
-      daemonize unless foreground?
+      unless config.foreground
+        daemonize
+        reconnect_database
+      end
 
       write_pid_file
-
-      self.delivery_handler_pool = DeliveryHandlerPool.new(configuration.push.connections)
-      delivery_handler_pool.populate
-
-      logger.info('Ready')
-
-      FeedbackReceiver.start
-      Feeder.start(foreground?)
+      ensure_upgraded
+      AppRunner.sync
+      Feeder.start(config.push_poll)
     end
 
     protected
 
+    def self.ensure_upgraded
+      count = 0
+
+      begin
+        count = Rapns::App.count
+      rescue ActiveRecord::StatementInvalid
+        puts "!!!! RAPNS NOT STARTED !!!!"
+        puts
+        puts "As of version v2.0.0 apps are configured in the database instead of rapns.yml."
+        puts "Please run 'rails g rapns' to generate the new migrations and create your apps with Rapns::App."
+        puts "See https://github.com/ileitch/rapns for further instructions."
+        puts
+        exit 1
+      end
+
+      if count == 0
+        logger.warn("You have not created an Rapns::App yet. See https://github.com/ileitch/rapns for instructions.")
+      end
+
+      if File.exists?(File.join(Rails.root, 'config', 'rapns', 'rapns.yml'))
+        logger.warn("Since 2.0.0 rapns uses command-line options instead of a configuration file. Please remove config/rapns/rapns.yml.")
+      end
+    end
+
     def self.setup_signal_hooks
       @shutting_down = false
 
+      Signal.trap('SIGHUP') { AppRunner.sync }
+      Signal.trap('SIGUSR1') { AppRunner.debug }
+
       ['SIGINT', 'SIGTERM'].each do |signal|
-        Signal.trap(signal) do
-          handle_shutdown_signal
-        end
+        Signal.trap(signal) { handle_shutdown_signal }
       end
     end
 
@@ -72,9 +85,8 @@ module Rapns
 
     def self.shutdown
       puts "\nShutting down..."
-      Rapns::Daemon::FeedbackReceiver.stop
-      Rapns::Daemon::Feeder.stop
-      Rapns::Daemon.delivery_handler_pool.drain if Rapns::Daemon.delivery_handler_pool
+      Feeder.stop
+      AppRunner.stop
       delete_pid_file
     end
 
@@ -92,19 +104,17 @@ module Rapns
     end
 
     def self.write_pid_file
-      if !configuration.pid_file.blank?
+      if !config.pid_file.blank?
         begin
-          File.open(configuration.pid_file, 'w') do |f|
-            f.puts $$
-          end
+          File.open(config.pid_file, 'w') { |f| f.puts Process.pid }
         rescue SystemCallError => e
-          logger.error("Failed to write PID to '#{configuration.pid_file}': #{e.inspect}")
+          logger.error("Failed to write PID to '#{config.pid_file}': #{e.inspect}")
         end
       end
     end
 
     def self.delete_pid_file
-      pid_file = configuration.pid_file
+      pid_file = config.pid_file
       File.delete(pid_file) if !pid_file.blank? && File.exists?(pid_file)
     end
   end

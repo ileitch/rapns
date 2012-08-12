@@ -4,4 +4,9 @@ Gemfile.lock
 pkg/*
 coverage/
 .rbx/
+<<<<<<< HEAD
 .idea/
+=======
+spec/acceptance/fixtures
+.rbenv-version
+>>>>>>> upstream/master

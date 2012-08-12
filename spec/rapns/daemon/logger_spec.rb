@@ -21,17 +21,30 @@ module Airbrake
 end
 
 describe Rapns::Daemon::Logger do
+  let(:log) { stub(:sync= => true) }
+  let(:config) { stub(:airbrake_notify => true) }
+
   before do
     Rails.stub(:root).and_return("/rails_root")
     @buffered_logger = mock("BufferedLogger", :info => nil, :error => nil, :level => 0, :auto_flushing => 1, :auto_flushing= => nil)
     Rails.logger = @buffered_logger
     ActiveSupport::BufferedLogger.stub(:new).and_return(@buffered_logger)
-    configuration = mock("Configuration", :airbrake_notify? => true)
-    Rapns::Daemon.stub(:configuration).and_return(configuration)
+    Rapns::Daemon.stub(:config => config)
+    File.stub(:open => log)
   end
 
   it "should open the a log file in the Rails log directory" do
-    ActiveSupport::BufferedLogger.should_receive(:new).with("/rails_root/log/rapns.log", Rails.logger.level)
+    File.should_receive(:open).with('/rails_root/log/rapns.log', 'w')
+    Rapns::Daemon::Logger.new(:foreground => true)
+  end
+
+  it 'sets sync mode on the log descriptor' do
+    log.should_receive(:sync=).with(true)
+    Rapns::Daemon::Logger.new(:foreground => true)
+  end
+
+  it 'instantiates the BufferedLogger' do
+    ActiveSupport::BufferedLogger.should_receive(:new).with(log, Rails.logger.level)
     Rapns::Daemon::Logger.new(:foreground => true)
   end
 
@@ -69,6 +82,7 @@ describe Rapns::Daemon::Logger do
 
   it "should handle an Exception instance" do
     e = RuntimeError.new("hi mom")
+    e.stub(:backtrace => [])
     logger = Rapns::Daemon::Logger.new(:foreground => false)
     @buffered_logger.should_receive(:error).with(/RuntimeError, hi mom/)
     logger.error(e)
@@ -76,6 +90,7 @@ describe Rapns::Daemon::Logger do
 
   it "should notify Airbrake of the exception" do
     e = RuntimeError.new("hi mom")
+    e.stub(:backtrace => [])
     logger = Rapns::Daemon::Logger.new(:foreground => false, :airbrake_notify => true)
     Airbrake.should_receive(:notify_or_ignore).with(e)
     logger.error(e)
@@ -95,6 +110,7 @@ describe Rapns::Daemon::Logger do
 
     it "should notify using HoptoadNotifier" do
       e = RuntimeError.new("hi mom")
+      e.stub(:backtrace => [])
       logger = Rapns::Daemon::Logger.new(:foreground => false, :airbrake_notify => true)
       HoptoadNotifier.should_receive(:notify_or_ignore).with(e)
       logger.error(e)
@@ -103,6 +119,7 @@ describe Rapns::Daemon::Logger do
 
   it "should not notify Airbrake of the exception if the airbrake_notify option is false" do
     e = RuntimeError.new("hi mom")
+    e.stub(:backtrace => [])
     logger = Rapns::Daemon::Logger.new(:foreground => false, :airbrake_notify => false)
     Airbrake.should_not_receive(:notify_or_ignore).with(e)
     logger.error(e)
@@ -110,6 +127,7 @@ describe Rapns::Daemon::Logger do
 
   it "should not notify Airbrake if explicitly disabled in the call to error" do
     e = RuntimeError.new("hi mom")
+    e.stub(:backtrace => [])
     logger = Rapns::Daemon::Logger.new(:foreground => false, :airbrake_notify => true)
     Airbrake.should_not_receive(:notify_or_ignore).with(e)
     logger.error(e, :airbrake_notify => false)

@@ -1,20 +1,18 @@
 module Rapns
   module Daemon
     class Feeder
-      extend DatabaseReconnectable
       extend InterruptibleSleep
+      extend DatabaseReconnectable
 
       def self.name
-        "Feeder"
+        'Feeder'
       end
 
-      def self.start(foreground)
-        reconnect_database unless foreground
-
+      def self.start(poll)
         loop do
           break if @stop
           enqueue_notifications
-          interruptible_sleep Rapns::Daemon.configuration.push.poll
+          interruptible_sleep poll
         end
       end
 
@@ -28,10 +26,10 @@ module Rapns
       def self.enqueue_notifications
         begin
           with_database_reconnect_and_retry do
-            if Rapns::Daemon.delivery_queue.notifications_processed?
-              Rapns::Notification.ready_for_delivery.each do |notification|
-                Rapns::Daemon.delivery_queue.push(notification)
-              end
+            ready_apps = Rapns::Daemon::AppRunner.ready
+            batch_size = Rapns::Daemon.config.batch_size
+            Rapns::Notification.ready_for_delivery.find_each(:batch_size => batch_size) do |notification|
+              Rapns::Daemon::AppRunner.deliver(notification) if ready_apps.include?(notification.app)
             end
           end
         rescue StandardError => e

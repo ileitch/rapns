@@ -1,6 +1,7 @@
 require "spec_helper"
 
 describe Rapns::Notification do
+  it { should validate_presence_of(:app) }
   it { should validate_presence_of(:device_token) }
   it { should validate_numericality_of(:badge) }
   it { should validate_numericality_of(:expiry) }
@@ -101,6 +102,22 @@ describe Rapns::Notification, "as_json" do
   end
 end
 
+describe Rapns::Notification, 'MDM' do
+  let(:magic) { 'abc123' }
+  let(:notification) { Rapns::Notification.new }
+
+  it 'includes the mdm magic in the payload' do
+    notification.mdm = magic
+    notification.as_json.should == {'mdm' => magic}
+  end
+
+  it 'does not include aps attribute' do
+    notification.alert = "i'm doomed"
+    notification.mdm = magic
+    notification.as_json.key?('aps').should be_false
+  end
+end
+
 describe Rapns::Notification, "to_binary" do
   it "should correctly convert the notification to binary" do
     notification = Rapns::Notification.new
@@ -110,6 +127,7 @@ describe Rapns::Notification, "to_binary" do
     notification.alert = "Don't panic Mr Mainwaring, don't panic!"
     notification.attributes_for_device = {:hi => :mom}
     notification.expiry = 86400 # 1 day, \x00\x01Q\x80
+    notification.app = 'my_app'
     notification.save!
     notification.stub(:id).and_return(1234)
     notification.to_binary.should == "\x01\x00\x00\x04\xD2\x00\x01Q\x80\x00 \xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\x00a{\"aps\":{\"alert\":\"Don't panic Mr Mainwaring, don't panic!\",\"badge\":3,\"sound\":\"1.aiff\"},\"hi\":\"mom\"}"
@@ -136,10 +154,45 @@ describe Rapns::Notification, "bug #35" do
     notification = Rapns::Notification.new do |n|
       n.device_token = "a" * 64
       n.alert = "a" * 210
+      n.app = 'my_app'
     end
 
-    notification.to_binary(:for_validation => true).size.should > 256
+    notification.to_binary(:for_validation => true).bytesize.should > 256
     notification.payload_size.should < 256
     notification.should be_valid
+  end
+end
+
+describe Rapns::Notification, "multi_json usage" do
+  describe Rapns::Notification, "alert" do
+    it "should call MultiJson.load when multi_json version is 1.3.0" do
+      notification = Rapns::Notification.new(:alert => { :a => 1 }, :alert_is_json => true)
+      Gem.stub(:loaded_specs).and_return( { 'multi_json' => Gem::Specification.new('multi_json', '1.3.0') } )
+      MultiJson.should_receive(:load).with(any_args())
+      notification.alert
+    end
+
+    it "should call MultiJson.decode when multi_json version is 1.2.9" do
+      notification = Rapns::Notification.new(:alert => { :a => 1 }, :alert_is_json => true)
+      Gem.stub(:loaded_specs).and_return( { 'multi_json' => Gem::Specification.new('multi_json', '1.2.9') } )
+      MultiJson.should_receive(:decode).with(any_args())
+      notification.alert
+    end
+  end
+
+  describe Rapns::Notification, "attributes_for_device=" do
+    it "should call MultiJson.dump when multi_json responds to :dump" do
+      notification = Rapns::Notification.new
+      MultiJson.stub(:respond_to?).with(:dump).and_return(true)
+      MultiJson.should_receive(:dump).with(any_args())
+      notification.attributes_for_device = { :pirates => 1 }
+    end
+
+    it "should call MultiJson.encode when multi_json does not respond to :dump" do
+      notification = Rapns::Notification.new
+      MultiJson.stub(:respond_to?).with(:dump).and_return(false)
+      MultiJson.should_receive(:encode).with(any_args())
+      notification.attributes_for_device = { :ninjas => 1 }
+    end
   end
 end

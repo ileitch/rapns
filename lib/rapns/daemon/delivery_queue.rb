@@ -1,27 +1,41 @@
 module Rapns
   module Daemon
-    class DeliveryQueue
+    if RUBY_VERSION < '1.9'
+      require 'rapns/daemon/delivery_queue_18'
+      ancestor_class = DeliveryQueue18
+    else
+      require 'rapns/daemon/delivery_queue_19'
+      ancestor_class = DeliveryQueue19
+    end
+
+    class DeliveryQueue < ancestor_class
+      class WakeupError < StandardError; end
+
       def initialize
-        @mutex = Mutex.new
         @num_notifications = 0
-        @queue = Queue.new
+        @queue = []
+        @waiting = []
+
+        super
       end
 
-      def push(notification)
-        @mutex.synchronize { @num_notifications += 1 }
-        @queue.push(notification)
+      def wakeup(thread)
+        synchronize do
+          t = @waiting.delete(thread)
+          t.raise WakeupError if t
+        end
       end
 
-      def pop
-        @queue.pop
+      def size
+        synchronize { @queue.size }
       end
 
       def notification_processed
-        @mutex.synchronize { @num_notifications -= 1 }
+        synchronize { @num_notifications -= 1 }
       end
 
       def notifications_processed?
-        @mutex.synchronize { @num_notifications == 0 }
+        synchronize { @num_notifications == 0 }
       end
     end
   end

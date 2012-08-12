@@ -3,8 +3,9 @@ module Rapns
     class Logger
       def initialize(options)
         @options = options
-        log_path = File.join(Rails.root, 'log', 'rapns.log')
-        @logger = ActiveSupport::BufferedLogger.new(log_path, Rails.logger.level)
+        log = File.open(File.join(Rails.root, 'log', 'rapns.log'), 'w')
+        log.sync = true
+        @logger = ActiveSupport::BufferedLogger.new(log, Rails.logger.level)
         @logger.auto_flushing = Rails.logger.respond_to?(:auto_flushing) ? Rails.logger.auto_flushing : true
       end
 
@@ -25,7 +26,8 @@ module Rapns
 
       def log(where, msg, prefix = nil)
         if msg.is_a?(Exception)
-          msg = "#{msg.class.name}, #{msg.message}"
+          formatted_backtrace = msg.backtrace.join("\n")
+          msg = "#{msg.class.name}, #{msg.message}\n#{formatted_backtrace}"
         end
 
         formatted_msg = "[#{Time.now.to_s(:db)}] "

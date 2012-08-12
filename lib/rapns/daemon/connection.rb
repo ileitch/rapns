@@ -90,6 +90,12 @@ module Rapns
       end
 
       def setup_ssl_context
+        if @certificate
+          certificate = @certificate.certificate
+        else
+          certificate = Rapns::Daemon.certificate.certificate
+        end
+
         ssl_context = OpenSSL::SSL::SSLContext.new
         ssl_context.key = OpenSSL::PKey::RSA.new(@certificate, @password)
         ssl_context.cert = OpenSSL::X509::Certificate.new(@certificate)

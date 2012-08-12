@@ -102,7 +102,7 @@ end
 describe Rapns::Daemon::AppRunner, 'deliver' do
   let(:runner) { stub }
   let(:notification) { stub(:app => 'app') }
-  let(:logger) { stub(:error => nil) }
+  let(:logger) { stub(:error => nil, :info => nil) }
 
   before do
     Rapns::Daemon.stub(:logger => logger)
@@ -144,7 +144,7 @@ describe Rapns::Daemon::AppRunner, 'sync' do
   let(:new_app) { stub(:key => 'new_app', :environment => 'development') }
   let(:runner) { stub(:sync => nil, :stop => nil) }
   let(:new_runner) { stub }
-  let(:logger) { stub(:error => nil) }
+  let(:logger) { stub(:error => nil, :info => nil) }
   let(:config) { stub(:feedback_poll => 60) }
 
   before do

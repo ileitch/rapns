@@ -4,7 +4,7 @@ module Rapns
 
     attr_accessible :key, :environment, :certificate, :password, :connections
 
-    validates :key, :presence => true, :uniqueness => true
+    validates :key, :presence => true, :uniqueness => { :scope => :environment }
     validates :environment, :presence => true, :inclusion => { :in => %w(development production) }
     validates :certificate, :presence => true
     validates_numericality_of :connections, :greater_than => 0, :only_integer => true

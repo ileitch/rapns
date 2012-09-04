@@ -9,6 +9,7 @@ module Rapns
     validates :device_token, :presence => true
     validates :badge, :numericality => true, :allow_nil => true
     validates :expiry, :numericality => true, :presence => true
+    validates :'content-available', :numericality => true
 
     validates_with Rapns::DeviceTokenFormatValidator
     validates_with Rapns::BinaryNotificationValidator

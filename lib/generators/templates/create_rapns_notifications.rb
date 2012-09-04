@@ -5,6 +5,7 @@ class CreateRapnsNotifications < ActiveRecord::Migration
       t.string    :device_token,          :null => false, :limit => 64
       t.string    :sound,                 :null => true,  :default => "1.aiff"
       t.string    :alert,                 :null => true
+      t.integer   :'content-available',   :null => false, :default => 0
       t.text      :attributes_for_device, :null => true
       t.integer   :expiry,                :null => false, :default => 1.day.to_i
       t.boolean   :delivered,             :null => false, :default => false

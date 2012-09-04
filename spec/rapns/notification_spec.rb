@@ -65,7 +65,7 @@ describe Rapns::Notification, "as_json" do
   end
 
   it "should include the content-available flag" do
-    notification = Rapns::Notification.new(:'content-available' => 1)
+    notification = Rapns::Notification.new(:content_available => 1)
     notification.as_json["aps"]["content-available"].should == 1
   end
 

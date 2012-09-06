@@ -33,11 +33,14 @@ module Rapns
       end
 
       def self.sync
+        Rapns::Daemon.logger.info("[Sync] Received synchonisation request")
         apps = Rapns::App.all
         apps.each do |app|
           if @all[app.key]
+            Rapns::Daemon.logger.info("[Sync] Resyncing app: #{app.key}")
             @all[app.key].sync(app)
           else
+            Rapns::Daemon.logger.info("[Sync] Loading app: #{app.key}")
             push_host, push_port = HOSTS[app.environment.to_sym][:push]
             feedback_host, feedback_port = HOSTS[app.environment.to_sym][:feedback]
             feedback_poll = Rapns::Daemon.config.feedback_poll
@@ -48,7 +51,12 @@ module Rapns
         end
 
         removed = @all.keys - apps.map(&:key)
-        removed.each { |key| @all.delete(key).stop }
+        removed.each { |key|
+          Rapns::Daemon.logger.info("[Sync] Removing app: #{key}")
+          @all.delete(key).stop
+        }
+
+        Rapns::Daemon.logger.info("[Sync] Synchronisation request processed")
       end
 
       def self.stop

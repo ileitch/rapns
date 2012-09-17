@@ -3,12 +3,13 @@ module Rapns
     self.table_name = 'rapns_notifications'
 
     attr_accessible :badge, :device_token, :sound, :alert, :attributes_for_device, :expiry,:delivered,
-      :delivered_at, :failed, :failed_at, :error_code, :error_description, :deliver_after, :alert_is_json, :app
+      :delivered_at, :failed, :failed_at, :error_code, :error_description, :deliver_after, :alert_is_json, :app, :content_available
 
     validates :app, :presence => true
     validates :device_token, :presence => true
     validates :badge, :numericality => true, :allow_nil => true
     validates :expiry, :numericality => true, :presence => true
+    validates :content_available, :presence => true
 
     validates_with Rapns::DeviceTokenFormatValidator
     validates_with Rapns::BinaryNotificationValidator
@@ -67,6 +68,7 @@ module Rapns
         json['aps']['alert'] = alert if alert
         json['aps']['badge'] = badge if badge
         json['aps']['sound'] = sound if sound
+        json['aps']['content-available'] = content_available if content_available
         attributes_for_device.each { |k, v| json[k.to_s] = v.to_s } if attributes_for_device
       end
 

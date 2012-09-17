@@ -64,6 +64,11 @@ describe Rapns::Notification, "as_json" do
     notification.as_json["aps"]["alert"].should == "hi mom"
   end
 
+  it "should include the content-available flag" do
+    notification = Rapns::Notification.new(:content_available => 1)
+    notification.as_json["aps"]["content-available"].should == 1
+  end
+
   it "should not include the alert key if the alert is not present" do
     notification = Rapns::Notification.new(:alert => nil)
     notification.as_json["aps"].key?("alert").should be_false

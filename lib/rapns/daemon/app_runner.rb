@@ -17,23 +17,24 @@ module Rapns
 
       def self.sync
         apps = Rapns::App.all
-        apps.each do |app|
-          if runners[app.id]
-            runners[app.id].sync(app)
-          else
-            runner = new_runner(app)
-            begin
-              runner.start
-              runners[app.id] = runner
-            rescue StandardError => e
-              Rapns::Daemon.logger.error("[App:#{app.name}] failed to start. No notifications will be sent.")
-              Rapns::Daemon.logger.error(e)
-            end
-          end
-        end
-
+        apps.each { |app| sync_app(app) }
         removed = runners.keys - apps.map(&:id)
         removed.each { |app_id| runners.delete(app_id).stop }
+      end
+
+      def self.sync_app(app)
+        if runners[app.id]
+          runners[app.id].sync(app)
+        else
+          runner = new_runner(app)
+          begin
+            runner.start
+            runners[app.id] = runner
+          rescue StandardError => e
+            Rapns::Daemon.logger.error("[#{app.name}] Exception raised during startup. Notifications will not be delivered for this app.")
+            Rapns::Daemon.logger.error(e)
+          end
+        end
       end
 
       def self.new_runner(app)
@@ -75,7 +76,12 @@ module Rapns
       end
 
       def debug
-        Rapns::Daemon.logger.info("\nApp State:\n#{@app.name}:\n  handlers: #{pool.size}\n  backlog: #{pool.mailbox_size}\n  ready: #{ready?}")
+        Rapns::Daemon.logger.info <<-EOS
+#{@app.name}:
+  handlers: #{pool.size}
+  backlog: #{pool.mailbox_size}
+  ready: #{ready?}
+        EOS
       end
 
       protected

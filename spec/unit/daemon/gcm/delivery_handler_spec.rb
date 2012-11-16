@@ -1,7 +1,8 @@
 require "unit_spec_helper"
 
 describe Rapns::Daemon::Gcm::DeliveryHandler do
-  let(:delivery_handler) { Rapns::Daemon::Gcm::DeliveryHandler.new }
+  let(:app) { stub(:name => 'MyApp') }
+  let(:delivery_handler) { Rapns::Daemon::Gcm::DeliveryHandler.new(app) }
   let(:notification) { stub }
   let(:http) { stub(:shutdown => nil)}
 
@@ -11,14 +12,14 @@ describe Rapns::Daemon::Gcm::DeliveryHandler do
   end
 
   it 'performs delivery of an notification' do
-    Rapns::Daemon::Gcm::Delivery.should_receive(:perform).with(http, notification)
+    Rapns::Daemon::Gcm::Delivery.should_receive(:perform).with(app, http, notification)
     delivery_handler.deliver(notification)
     delivery_handler.terminate
   end
 
   it 'initiates a persistent connection object' do
     Net::HTTP::Persistent.should_receive(:new).with('rapns')
-    delivery_handler = Rapns::Daemon::Gcm::DeliveryHandler.new
+    delivery_handler = Rapns::Daemon::Gcm::DeliveryHandler.new(app)
     delivery_handler.terminate
   end
 

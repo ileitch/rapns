@@ -2,16 +2,14 @@ module Rapns
   module Daemon
     module Apns
       class DeliveryHandler < Rapns::Daemon::DeliveryHandler
-        attr_reader :name
-
         def initialize(app, host, port)
-          @name = "DeliveryHandler:#{app.name}"
-          @connection = Connection.new(@name, host, port, app.certificate, app.password)
+          @app = app
+          @connection = Connection.new(app, host, port)
           @connection.connect
         end
 
         def deliver(notification)
-          Rapns::Daemon::Apns::Delivery.perform(@connection, notification)
+          Rapns::Daemon::Apns::Delivery.perform(@app, @connection, notification)
         end
 
         def finalize

@@ -11,7 +11,7 @@ module Rapns
       def self.start(poll)
         loop do
           break if @stop
-          enqueue_notifications
+          deliver_notifications
           interruptible_sleep poll
         end
       end
@@ -23,12 +23,12 @@ module Rapns
 
       protected
 
-      def self.enqueue_notifications
+      def self.deliver_notifications
         begin
           with_database_reconnect_and_retry do
             batch_size = Rapns::Daemon.config.batch_size
             Rapns::Notification.ready_for_delivery.find_each(:batch_size => batch_size) do |notification|
-              Rapns::Daemon::AppRunner.enqueue(notification)
+              Rapns::Daemon::AppRunner.deliver(notification)
             end
           end
         rescue StandardError => e

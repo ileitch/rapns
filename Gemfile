@@ -5,6 +5,7 @@ gem 'rspec'
 gem 'shoulda'
 gem 'rails'
 gem 'cane'
+gem 'celluloid', :github => 'ileitch/celluloid', :branch => 'pool'
 
 platform :ruby do
   gem 'pg'
@@ -23,7 +24,5 @@ end
 
 gem 'database_cleaner'
 gem 'simplecov'
-gem 'multi_json'
-gem 'net-http-persistent'
 
 gemspec

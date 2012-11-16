@@ -1,48 +1,34 @@
 shared_examples_for "an AppRunner subclass" do
-  let(:queue) { stub(:notifications_processed? => true, :push => nil) }
-
-  before { Rapns::Daemon::DeliveryQueue.stub(:new => queue) }
   after { Rapns::Daemon::AppRunner.runners.clear }
 
   describe 'start' do
-    it 'starts a delivery handler for each connection' do
-      handler.should_receive(:start)
-      runner.start
-    end
-
-    it 'assigns the queue to the handler' do
-      handler.should_receive(:queue=).with(queue)
+    it 'initializes a handler pool' do
+      handler_class.should_receive(:pool)
       runner.start
     end
   end
 
-  describe 'enqueue' do
+  describe 'deliver' do
     let(:notification) { stub }
 
-    it 'enqueues the notification' do
-      queue.should_receive(:push).with(notification)
-      runner.enqueue(notification)
+    it 'does not deliver the notification if the pool mailbox is not empty' do
+      pool.async.stub(:mailbox_size => 1)
+      pool.async.should_not_receive(:deliver)
+    end
+
+    it 'delivers the notification if the pool mailbox is empty' do
+      pool.async.stub(:mailbox_size => 0)
+      pool.async.should_receive(:deliver).with(notification)
+      runner.deliver(notification)
     end
   end
 
   describe 'stop' do
     before { runner.start }
 
-    it 'stops the delivery handlers' do
-      handler.should_receive(:stop)
+    it 'terminates the pool' do
+      pool.should_receive(:terminate)
       runner.stop
-    end
-  end
-
-  describe 'ready?' do
-    it 'is ready if all notifications have been processed' do
-      queue.stub(:notifications_processed? => true)
-      runner.ready?.should be_true
-    end
-
-    it 'is not ready if not all notifications have been processed' do
-      queue.stub(:notifications_processed? => false)
-      runner.ready?.should be_false
     end
   end
 
@@ -50,16 +36,18 @@ shared_examples_for "an AppRunner subclass" do
     before { runner.start }
 
     it 'reduces the number of handlers if needed' do
-      handler.should_receive(:stop)
+      pool.stub(:size => 1)
+      pool.should_receive(:shrink).with(1)
       new_app = app_class.new
       new_app.stub(:connections => app.connections - 1)
       runner.sync(new_app)
     end
 
     it 'increases the number of handlers if needed' do
-      runner.should_receive(:start_handler).and_return(handler)
+      pool.stub(:size => 1)
+      pool.should_receive(:grow).with(2)
       new_app = app_class.new
-      new_app.stub(:connections => app.connections + 1)
+      new_app.stub(:connections => app.connections + 2)
       runner.sync(new_app)
     end
   end

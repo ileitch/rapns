@@ -26,9 +26,9 @@ module Rapns
           @feedback_receiver.stop if @feedback_receiver
         end
 
-        def new_delivery_handler
+        def delivery_handler_args
           push_host, push_port = ENVIRONMENTS[app.environment.to_sym][:push]
-          DeliveryHandler.new(app.name, push_host, push_port, app.certificate, app.password)
+          [app, push_host, push_port]
         end
       end
     end

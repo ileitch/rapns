@@ -10,7 +10,7 @@ module Rapns
           Rapns::Daemon::Gcm::Delivery.perform(@http, notification)
         end
 
-        def stopped
+        def finalize
           @http.shutdown
         end
       end

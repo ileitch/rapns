@@ -23,15 +23,15 @@ describe Rapns::Daemon::AppRunner, 'deliver' do
 
   after { Rapns::Daemon::AppRunner.runners.clear }
 
-  it 'enqueues the notification' do
-    runner.should_receive(:enqueue).with(notification)
-    Rapns::Daemon::AppRunner.enqueue(notification)
+  it 'delivers the notification' do
+    runner.should_receive(:deliver).with(notification)
+    Rapns::Daemon::AppRunner.deliver(notification)
   end
 
   it 'logs an error if there is no runner to deliver the notification' do
     notification.stub(:app_id => 2, :id => 123)
     logger.should_receive(:error).with("No such app '#{notification.app_id}' for notification #{notification.id}.")
-    Rapns::Daemon::AppRunner.enqueue(notification)
+    Rapns::Daemon::AppRunner.deliver(notification)
   end
 end
 
@@ -40,10 +40,8 @@ describe Rapns::Daemon::AppRunner, 'sync' do
   let(:new_app) { stub(:id => 2) }
   let(:runner) { stub(:sync => nil, :stop => nil, :start => nil) }
   let(:logger) { stub(:error => nil) }
-  let(:queue) { Rapns::Daemon::DeliveryQueue.new }
 
   before do
-    Rapns::Daemon::DeliveryQueue.stub(:new => queue)
     Rapns::Daemon::AppRunner.stub(:new_runner_for_app => runner)
     Rapns::Daemon::AppRunner.runners[app.id] = runner
     Rapns::App.stub(:all => [app])
@@ -64,7 +62,7 @@ describe Rapns::Daemon::AppRunner, 'sync' do
   it 'starts a runner for a new app' do
     Rapns::App.stub(:all => [app, new_app])
     new_runner = stub
-    Rapns::Daemon::AppRunner.should_receive(:new_runner_for_app).and_return(new_runner)
+    Rapns::Daemon::AppRunner.should_receive(:new_runner).and_return(new_runner)
     new_runner.should_receive(:start)
     Rapns::Daemon::AppRunner.sync
   end

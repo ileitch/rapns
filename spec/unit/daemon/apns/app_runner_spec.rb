@@ -8,12 +8,14 @@ describe Rapns::Daemon::Apns::AppRunner do
   let(:app) { app_class.create!(:name => 'my_app', :environment => 'development',
                                 :certificate => 'cert', :password => 'pass') }
   let(:runner) { Rapns::Daemon::Apns::AppRunner.new(app) }
-  let(:handler) { stub(:start => nil, :stop => nil, :queue= => nil) }
+  let(:pool) { stub(:async => stub(:deliver => true), :size => 0, :mailbox_size => 0, :terminate => nil, :grow => 0) }
+  let(:handler) { stub(:start => nil, :stop => nil) }
   let(:receiver) { stub(:start => nil, :stop => nil) }
   let(:config) { {:feedback_poll => 60 } }
+  let(:handler_class) { Rapns::Daemon::Apns::DeliveryHandler }
 
   before do
-    Rapns::Daemon::Apns::DeliveryHandler.stub(:new => handler)
+    Rapns::Daemon::Apns::DeliveryHandler.stub(:new => handler, :pool => pool)
     Rapns::Daemon::Apns::FeedbackReceiver.stub(:new => receiver)
     Rapns::Daemon.stub(:config => config)
   end

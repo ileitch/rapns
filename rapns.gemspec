@@ -8,13 +8,15 @@ Gem::Specification.new do |s|
   s.authors     = ["Ian Leitch"]
   s.email       = ["port001@gmail.com"]
   s.homepage    = "https://github.com/ileitch/rapns"
-  s.summary     = %q{Easy to use, full featured APNs daemon for Rails 3}
-  s.description = %q{Easy to use, full featured APNs daemon for Rails 3}
+  s.summary     = %q{Easy to use, full featured APNs & GCM daemon for Rails 3.}
+  s.description = %q{Easy to use, full featured APNs & GCM daemon for Rails 3.}
 
   s.files         = `git ls-files -- lib README.md CHANGELOG.md LICENSE`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features,config}`.split("\n")
   s.executables   = `git ls-files -- bin`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
+
+  s.required_ruby_version = '>= 1.9.3'
 
   s.add_dependency "multi_json", "~> 1.0"
   s.add_dependency "net-http-persistent"

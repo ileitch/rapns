@@ -6,7 +6,7 @@ describe Rapns::Daemon::Apns::DeliveryHandler do
   let(:port) { 2195 }
   let(:certificate) { stub }
   let(:password) { stub }
-  let(:app) { stub(password: password, certificate: certificate, name: name)}
+  let(:app) { stub(:password => password, :certificate => certificate, :name => name)}
   let(:delivery_handler) { Rapns::Daemon::Apns::DeliveryHandler.new(app, host, port) }
   let(:connection) { stub('Connection', :select => false, :write => nil, :reconnect => nil, :close => nil, :connect => nil) }
   let(:notification) { stub }

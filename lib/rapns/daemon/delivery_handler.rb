@@ -13,7 +13,7 @@ module Rapns
       end
 
       def handle_exit(actor, reason)
-        Rapns::Daemon.logger.error(reason)
+        Rapns::Daemon.logger.error(reason) if reason
       end
     end
   end

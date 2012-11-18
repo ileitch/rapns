@@ -50,6 +50,10 @@ module Rapns
         @runners.values.map(&:debug)
       end
 
+      def self.idle
+        runners.values.find_all { |runner| runner.idle? }
+      end
+
       attr_reader :app
 
       def initialize(app)
@@ -67,7 +71,7 @@ module Rapns
       end
 
       def deliver(notification)
-        pool.async.deliver(notification) if ready?
+        pool.async.deliver(notification)
       end
 
       def sync(app)
@@ -76,12 +80,16 @@ module Rapns
         diff > 0 ? pool.shrink(diff) : pool.grow(diff.abs)
       end
 
+      def idle?
+        pool.mailbox_size == 0
+      end
+
       def debug
         Rapns::Daemon.logger.info <<-EOS
 #{@app.name}:
   handlers: #{pool.size}
   backlog: #{pool.mailbox_size}
-  ready: #{ready?}
+  idle: #{idle?}
         EOS
       end
 
@@ -96,10 +104,6 @@ module Rapns
 
       def delivery_handler_class
         "#{self.class.parent.name}::DeliveryHandler".constantize
-      end
-
-      def ready?
-        pool.mailbox_size == 0
       end
 
       def delivery_handler_args

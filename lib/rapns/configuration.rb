@@ -14,7 +14,7 @@ module Rapns
   end
 
   # A class to hold Rapns configuration settings and callbacks.
-  class Configuration < Struct.new(:foreground, :push_poll, :feedback_poll, :airbrake_notify, :check_for_errors, :pid_file, :batch_size)
+  class Configuration < Struct.new(:foreground, :push_poll, :feedback_poll, :airbrake_notify, :check_for_errors, :pid_file, :batch_size, :queue)
 
     attr_accessor :feedback_callback
 
@@ -29,6 +29,7 @@ module Rapns
       self.airbrake_notify = true
       self.check_for_errors = true
       self.batch_size = 5000
+      self.queue = nil
     end
 
     # Define a block that will be executed with a Rapns::Feedback instance when feedback has been received from the

@@ -47,6 +47,10 @@ module Rapns
       write_pid_file
       ensure_upgraded
       AppRunner.sync
+
+      @app_sync = AppSync.new
+      @app_sync.start
+
       Feeder.start(config.push_poll)
     end
 
@@ -97,6 +101,9 @@ module Rapns
       puts "\nShutting down..."
       Feeder.stop
       AppRunner.stop
+
+      @app_sync.stop
+
       delete_pid_file
     end
 

@@ -28,7 +28,12 @@ module Rapns
           with_database_reconnect_and_retry do
             batch_size = Rapns::Daemon.config.batch_size
             idle = Rapns::Daemon::AppRunner.idle.map(&:app)
-            Rapns::Notification.ready_for_delivery.for_apps(idle).limit(batch_size).each do |notification|
+            queue = Rapns::Daemon.config.queue
+
+            source = Rapns::Notification.ready_for_delivery.for_apps(idle).limit(batch_size)
+            source = source.for_queue(queue) if queue
+
+            source.each do |notification|
               Rapns::Daemon::AppRunner.enqueue(notification)
             end
           end

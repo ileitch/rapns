@@ -39,8 +39,10 @@ module Rapns
 
         begin
           deliver(notification)
+          QueueStatus.sent_ok(Rapns::Daemon.config.queue)
         rescue StandardError => e
           Rapns::Daemon.logger.error(e)
+          QueueStatus.sent_failed(Rapns::Daemon.config.queue)
         ensure
           queue.notification_processed
         end

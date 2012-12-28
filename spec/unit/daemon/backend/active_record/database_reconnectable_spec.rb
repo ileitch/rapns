@@ -1,8 +1,8 @@
 require "unit_spec_helper"
 
-describe Rapns::Daemon::DatabaseReconnectable do
+describe Rapns::Daemon::Backend::ActiveRecord::Reconnectable do
   class TestDouble
-    include Rapns::Daemon::DatabaseReconnectable
+    include Rapns::Daemon::Backend::ActiveRecord::Reconnectable
 
     attr_reader :name
 

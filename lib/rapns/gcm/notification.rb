@@ -6,8 +6,7 @@ module Rapns
       validates_with Rapns::Gcm::PayloadSizeValidator
 
       def registration_ids=(ids)
-        ids = [ids] if ids && !ids.is_a?(Array)
-        super
+        super(Array(ids))
       end
 
       def as_json

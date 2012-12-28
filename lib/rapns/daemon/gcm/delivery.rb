@@ -93,25 +93,22 @@ module Rapns
         end
 
         def some_devices_unavailable(response, errors)
-          unavailable_idxs = errors.find_all { |i, error| error.in?(UNAVAILABLE_STATES) }.map(&:first)
-          new_notification = build_new_notification(response, unavailable_idxs)
-          with_database_reconnect_and_retry { new_notification.save! }
+          new_notification = create_new_notification(response, errors)
           raise Rapns::DeliveryError.new(nil, @notification.id,
             describe_errors(errors) + " #{unavailable_idxs.join(', ')} will be retried as notification #{new_notification.id}.")
         end
 
         def build_new_notification(response, idxs)
-          notification = Rapns::Gcm::Notification.new
-          notification.assign_attributes(@notification.attributes.slice('app_id', 'collapse_key', 'delay_while_idle'))
-          notification.data = @notification.data
-          notification.registration_ids = idxs.map { |i| @notification.registration_ids[i] }
-          notification.deliver_after = deliver_after_header(response)
-          notification
+          unavailable_idxs = errors.find_all { |i, error| error.in?(UNAVAILABLE_STATES) }.map(&:first)
+          attrs = @notification.attributes.slice('app_id', 'collapse_key', 'delay_while_idle')
+          registration_ids = unavailable_idxs.map { |i| @notification.registration_ids[i] }
+          Rapns::Daemon.backend.create_gcm_notification(attrs,
+            @notification.data, registration_ids, deliver_after_header(response))
         end
 
         def deliver_after_header(response)
           if response.header['retry-after']
-            retry_after = if response.header['retry-after'].to_s =~ /^[0-9]+$/
+            if response.header['retry-after'].to_s =~ /^[0-9]+$/
               Time.now + response.header['retry-after'].to_i
             else
               Time.httpdate(response.header['retry-after'])

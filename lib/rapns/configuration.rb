@@ -9,12 +9,27 @@ module Rapns
 
   CONFIG_ATTRS = [:foreground, :push_poll, :feedback_poll, :embedded,
     :airbrake_notify, :check_for_errors, :pid_file, :batch_size,
-    :push]
+    :push, :backend]
+  REDIS_CONFIG_ATTRS = [:host, :port, :path, :driver]
+  AR_CONFIG_ATTRS = [:host, :port, :username, :password, :adapter, :database,
+    :encoding, :database_yml]
 
-  class ConfigurationWithoutDefaults < Struct.new(*CONFIG_ATTRS)
+  class HashableStruct < Struct
+    def to_hash
+      Hash[members.zip(values)]
+    end
   end
 
-  class Configuration < Struct.new(*CONFIG_ATTRS)
+  class ConfigurationWithoutDefaults < HashableStruct.new(*CONFIG_ATTRS)
+  end
+
+  class RedisConfiguration < HashableStruct.new(*REDIS_CONFIG_ATTRS)
+  end
+
+  class ActiveRecordConfiguration < HashableStruct.new(*AR_CONFIG_ATTRS)
+  end
+
+  class Configuration < HashableStruct.new(*CONFIG_ATTRS)
     include Deprecatable
 
     attr_accessor :apns_feedback_callback
@@ -39,6 +54,16 @@ module Rapns
       end
     end
 
+    def redis
+      @redis ||= RedisConfiguration.new
+      block_given? ? yield(@redis) : @redis
+    end
+
+    def active_record
+      @active_record ||= ActiveRecordConfiguration.new
+      block_given? ? yield(@active_record) : @active_record
+    end
+
     def on_apns_feedback(&block)
       self.apns_feedback_callback = block
     end
@@ -55,6 +80,7 @@ module Rapns
       self.batch_size = 5000
       self.pid_file = nil
       self.apns_feedback_callback = nil
+      self.backend = :active_record
 
       # Internal options.
       self.embedded = false

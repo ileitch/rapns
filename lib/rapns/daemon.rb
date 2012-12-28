@@ -2,13 +2,11 @@ require 'thread'
 require 'socket'
 require 'pathname'
 require 'openssl'
-
 require 'net/http/persistent'
 
 require 'rapns/daemon/reflectable'
 require 'rapns/daemon/interruptible_sleep'
 require 'rapns/daemon/delivery_error'
-require 'rapns/daemon/database_reconnectable'
 require 'rapns/daemon/delivery'
 require 'rapns/daemon/delivery_queue'
 require 'rapns/daemon/feeder'
@@ -16,29 +14,19 @@ require 'rapns/daemon/logger'
 require 'rapns/daemon/app_runner'
 require 'rapns/daemon/delivery_handler'
 
-require 'rapns/daemon/apns/delivery'
-require 'rapns/daemon/apns/disconnection_error'
-require 'rapns/daemon/apns/connection'
-require 'rapns/daemon/apns/app_runner'
-require 'rapns/daemon/apns/delivery_handler'
-require 'rapns/daemon/apns/feedback_receiver'
-
-require 'rapns/daemon/gcm/delivery'
-require 'rapns/daemon/gcm/app_runner'
-require 'rapns/daemon/gcm/delivery_handler'
+require 'rapns/daemon/apns'
+require 'rapns/daemon/gcm'
 
 module Rapns
   module Daemon
-    extend DatabaseReconnectable
-
     class << self
-      attr_accessor :logger
+      attr_accessor :logger, :backend
     end
 
     def self.start
       self.logger = Logger.new(:foreground => Rapns.config.foreground,
                                :airbrake_notify => Rapns.config.airbrake_notify)
-
+      setup_backend
       setup_signal_traps if trap_signals?
 
       if daemonize?
@@ -61,8 +49,24 @@ module Rapns
 
     protected
 
+    def self.setup_backend
+      begin
+        require "rapns/daemon/backend/#{Rapns.config.backend}"
+        klass = "Rapns::Daemon::Backend::#{Rapns.config.backend.to_s.camelcase}".constantize
+        self.backend = klass.new
+      rescue LoadError => e
+        logger.error("Failed to load '#{Rapns.config.backend}' backend.")
+        logger.error(e)
+        exit 1 if can_exit?
+      end
+    end
+
     def self.daemonize?
       !(Rapns.config.foreground || Rapns.config.embedded || Rapns.config.push)
+    end
+
+    def self.can_exit?
+      !(Rapns.config.embedded || Rapns.config.push)
     end
 
     def self.ensure_upgraded
@@ -77,7 +81,7 @@ module Rapns
         puts "Please run 'rails g rapns' to generate the new migrations and create your app."
         puts "See https://github.com/ileitch/rapns for further instructions."
         puts
-        exit 1 unless Rapns.config.embedded || Rapns.config.push
+        exit 1 if can_exit?
       end
 
       if count == 0

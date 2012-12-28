@@ -1,0 +1,30 @@
+
+app.store = :db
+app.store = :redis
+app.store = :zeromq
+app.store = :direct
+
+app.backend.start_feeder
+app.backend.notification_delivered
+app.backend.notification_failed
+app.
+
+
+Rapns.configure do |config|
+  config.store = :redis
+
+
+
+  config.db do |db|
+    db.host
+    db.
+  end
+
+  config.redis do |redis|
+    redis.host =
+    redis.port =
+  end
+
+  config.zeromq do |zeromq|
+  end
+end

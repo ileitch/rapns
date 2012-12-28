@@ -6,7 +6,8 @@ describe Rapns::Daemon, "when starting" do
   let(:certificate) { stub }
   let(:password) { stub }
   let(:config) { stub(:pid_file => nil, :airbrake_notify => false,
-    :foreground => true, :embedded => false, :push => false) }
+    :foreground => true, :embedded => false, :push => false,
+    :backend => :active_record) }
   let(:logger) { stub(:info => nil, :error => nil, :warn => nil) }
 
   before do
@@ -14,7 +15,8 @@ describe Rapns::Daemon, "when starting" do
     Rapns::Daemon::Feeder.stub(:start)
     Rapns::Daemon::Logger.stub(:new).and_return(logger)
     Rapns::Daemon::AppRunner.stub(:sync => nil, :stop => nil)
-    Rapns::Daemon.stub(:daemonize => nil, :reconnect_database => nil, :exit => nil, :puts => nil)
+    Rapns::Daemon.stub(:daemonize => nil, :reconnect_database => nil,
+      :exit => nil, :puts => nil)
     File.stub(:open)
     Rails.stub(:root).and_return("/rails_root")
   end
@@ -127,6 +129,11 @@ describe Rapns::Daemon, "when starting" do
     File.should_receive(:exists?).with('/rails_root/config/rapns/rapns.yml').and_return(true)
     logger.should_receive(:warn).with("Since 2.0.0 rapns uses command-line options and a Ruby based configuration file.\nPlease run 'rails g rapns' to generate a new configuration file into config/initializers.\nRemove config/rapns/rapns.yml to avoid this warning.\n")
     Rapns::Daemon.start
+  end
+
+  it 'instantiates the backend' do
+    Rapns::Daemon.start
+    Rapns::Daemon.backend.should be_kind_of(Rapns::Daemon::Backend::ActiveRecord)
   end
 end
 

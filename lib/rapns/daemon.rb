@@ -3,6 +3,7 @@ require 'socket'
 require 'pathname'
 require 'openssl'
 require 'net/http/persistent'
+require 'active_support'
 
 require 'rapns/daemon/reflectable'
 require 'rapns/daemon/interruptible_sleep'

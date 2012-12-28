@@ -62,7 +62,7 @@ module Rapns
     end
 
     def self.daemonize?
-      !(Rapns.config.foreground || Rapns.config.embedded || Rapns.config.push)
+      !(Rapns.config.foreground || Rapns.config.embedded || Rapns.config.push || defined?(JRUBY_VERSION))
     end
 
     def self.can_exit?
@@ -135,16 +135,17 @@ Remove config/rapns/rapns.yml to avoid this warning.
 
     # :nocov:
     def self.daemonize
-      exit if pid = fork
-      Process.setsid
-      exit if pid = fork
-
-      Dir.chdir '/'
-      File.umask 0000
-
-      STDIN.reopen '/dev/null'
-      STDOUT.reopen '/dev/null', 'a'
-      STDERR.reopen STDOUT
+      if RUBY_VERSION < "1.9"
+        exit if fork
+        Process.setsid
+        exit if fork
+        Dir.chdir "/"
+        STDIN.reopen "/dev/null"
+        STDOUT.reopen "/dev/null", "a"
+        STDERR.reopen "/dev/null", "a"
+      else
+        Process.daemon
+      end
     end
   end
 end

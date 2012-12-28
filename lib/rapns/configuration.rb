@@ -65,7 +65,7 @@ module Rapns
     end
 
     def foreground=(bool)
-      if defined? JRUBY_VERSION
+      if Rapns.jruby?
         # The JVM does not support fork().
         super(true)
       else
@@ -81,7 +81,7 @@ module Rapns
     private
 
     def set_defaults
-      if defined? JRUBY_VERSION
+      if Rapns.jruby?
         # The JVM does not support fork().
         self.foreground = true
       else

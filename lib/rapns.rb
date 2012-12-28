@@ -29,4 +29,8 @@ module Rapns
     require 'rapns/daemon'
     require 'rapns/patches'
   end
+
+  def self.juby?
+    defined? JRUBY_VERSION
+  end
 end

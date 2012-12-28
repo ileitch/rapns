@@ -63,7 +63,7 @@ module Rapns
     end
 
     def self.daemonize?
-      !(Rapns.config.foreground || Rapns.config.embedded || Rapns.config.push || defined?(JRUBY_VERSION))
+      !(Rapns.config.foreground || Rapns.config.embedded || Rapns.config.push || Rapns.jruby?)
     end
 
     def self.can_exit?

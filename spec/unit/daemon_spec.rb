@@ -148,7 +148,7 @@ describe Rapns::Daemon, "when being shutdown" do
   end
 
   # These tests do not work on JRuby.
-  unless defined? JRUBY_VERSION
+  unless Rapns.jruby?
     it "shuts down when signaled signaled SIGINT" do
       Rapns::Daemon.setup_signal_traps
       Rapns::Daemon.should_receive(:shutdown)

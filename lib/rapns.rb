@@ -1,8 +1,15 @@
 require 'multi_json'
 require 'active_support'
 
-require 'active_record' rescue LoadError
-require 'redis' rescue LoadError
+begin
+  require 'active_record'
+rescue LoadError
+end
+
+begin
+  require 'redis'
+rescue LoadError
+end
 
 module Rapns
   def self.jruby?

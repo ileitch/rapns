@@ -135,6 +135,14 @@ describe Rapns::Daemon, "when starting" do
     Rapns::Daemon.start
     Rapns::Daemon.backend.should be_kind_of(Rapns::Daemon::ActiveRecord)
   end
+
+  it 'logs an error if the backend cannot be loaded' do
+    config.stub(:backend => :active_record)
+    error = LoadError.new
+    Rapns::Daemon::ActiveRecord.stub(:new).and_raise(error)
+    logger.should_receive(:error).with(error)
+    Rapns::Daemon.start
+  end
 end
 
 describe Rapns::Daemon, "when being shutdown" do

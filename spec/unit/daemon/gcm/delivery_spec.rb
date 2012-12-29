@@ -20,6 +20,11 @@ describe Rapns::Daemon::Gcm::Delivery do
     Rapns::Daemon.stub(:logger => logger, :backend => backend)
   end
 
+  it 'provides a convenience constructor method' do
+    Rapns::Daemon::Gcm::Delivery.any_instance.should_receive(:perform)
+    Rapns::Daemon::Gcm::Delivery.perform(app, http, notification)
+  end
+
   describe 'an 200 response' do
     before do
       response.stub(:code => 200)

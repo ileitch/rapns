@@ -39,7 +39,7 @@ module Rapns
         begin
           idle = Rapns::Daemon::AppRunner.idle.map(&:app)
 
-          Rapns::Daemon.backend.feeder.each_notification(idle) do |notification|
+          Rapns::Daemon.backend.feeder.notifications(idle).each do |notification|
             Rapns::Daemon::AppRunner.enqueue(notification)
             reflect(:notification_enqueued, notification)
           end

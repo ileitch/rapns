@@ -10,6 +10,15 @@ describe Rapns do
   end
 end
 
+describe Rapns::HashableStruct do
+  class TestStruct < Rapns::HashableStruct.new(:foo, :bar); end
+
+  it 'can be coerced to a Hash' do
+    struct = TestStruct.new(1, 2)
+    struct.to_hash.should == {:foo => 1, :bar => 2}
+  end
+end
+
 describe Rapns::Configuration do
   let(:config) { Rapns::Configuration.new }
 
@@ -43,5 +52,18 @@ describe Rapns::Configuration do
     Rapns.stub(:jruby? => true)
     config.foreground = false
     config.foreground.should be_true
+  end
+
+  it 'sets foreground to true if running on JRuby' do
+    Rapns.stub(:jruby? => true)
+    config.foreground.should be_true
+  end
+
+  it 'returns Redis configuration' do
+    config.redis.should be_kind_of(Rapns::RedisConfiguration)
+  end
+
+  it 'returns ActiveRecord configuration' do
+    config.active_record.should be_kind_of(Rapns::ActiveRecordConfiguration)
   end
 end

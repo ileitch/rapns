@@ -21,6 +21,11 @@ describe Rapns::Daemon::Apns::Delivery do
     Rapns::Daemon.stub(:logger => logger, :backend => backend)
   end
 
+  it 'provides a convenience constructor method' do
+    Rapns::Daemon::Apns::Delivery.any_instance.should_receive(:perform)
+    Rapns::Daemon::Apns::Delivery.perform(app, connection, notification)
+  end
+
   it "sends the binary version of the notification" do
     notification.stub(:to_binary => "hi mom")
     connection.should_receive(:write).with("hi mom")

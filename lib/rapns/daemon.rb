@@ -67,7 +67,7 @@ module Rapns
         require "rapns/daemon/#{Rapns.config.backend}"
         klass = "Rapns::Daemon::#{Rapns.config.backend.to_s.camelcase}".constantize
         self.backend = klass.new
-      rescue LoadError => e
+      rescue StandardError, LoadError => e
         logger.error("Failed to load '#{Rapns.config.backend}' backend.")
         logger.error(e)
         exit 1 if can_exit?

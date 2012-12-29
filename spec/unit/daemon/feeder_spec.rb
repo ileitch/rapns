@@ -10,14 +10,14 @@ describe Rapns::Daemon::Feeder do
   let(:backend) { stub(:feeder => feeder) }
 
   before do
-    feeder.stub(:each_notification).and_yield(notification)
+    feeder.stub(:notifications => [notification])
     Rapns.stub(:config => config)
     Rapns::Daemon.stub(:backend => backend, :logger => logger)
-    Rapns::Daemon::Feeder.stub(:stop? => true)
     Rapns::Daemon::AppRunner.stub(:idle => [stub(:app => app)], :enqueue => nil)
   end
 
   def start
+    Rapns::Daemon::Feeder.stub(:stop? => true)
     Rapns::Daemon::Feeder.start
   end
 
@@ -47,7 +47,7 @@ describe Rapns::Daemon::Feeder do
 
   it "logs errors" do
     e = StandardError.new("bork")
-    feeder.stub(:each_notification).and_raise(e)
+    feeder.stub(:notifications).and_raise(e)
     Rapns::Daemon.logger.should_receive(:error).with(e)
     start
   end
@@ -68,5 +68,9 @@ describe Rapns::Daemon::Feeder do
     Rapns::Daemon::Feeder.should_receive(:interruptible_sleep).with(2)
     Rapns::Daemon::Feeder.stub(:loop).and_yield
     Rapns::Daemon::Feeder.start
+  end
+
+  it 'responds to stop?' do
+    Rapns::Daemon::Feeder.stop?
   end
 end

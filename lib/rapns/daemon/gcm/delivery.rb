@@ -93,17 +93,17 @@ module Rapns
         end
 
         def some_devices_unavailable(response, errors)
-          new_notification = create_new_notification(response, errors)
+          unavailable_idxs = errors.find_all { |i, error| error.in?(UNAVAILABLE_STATES) }.map(&:first)
+          new_notification = create_new_notification(response, unavailable_idxs)
           raise Rapns::DeliveryError.new(nil, @notification.id,
             describe_errors(errors) + " #{unavailable_idxs.join(', ')} will be retried as notification #{new_notification.id}.")
         end
 
-        def build_new_notification(response, idxs)
-          unavailable_idxs = errors.find_all { |i, error| error.in?(UNAVAILABLE_STATES) }.map(&:first)
+        def create_new_notification(response, unavailable_idxs)
           attrs = @notification.attributes.slice('app_id', 'collapse_key', 'delay_while_idle')
           registration_ids = unavailable_idxs.map { |i| @notification.registration_ids[i] }
-          Rapns::Daemon.backend.create_gcm_notification(attrs,
-            @notification.data, registration_ids, deliver_after_header(response))
+          Rapns::Daemon.backend.create_gcm_notification(attrs, @notification.data,
+            registration_ids, deliver_after_header(response), @notification.app)
         end
 
         def deliver_after_header(response)

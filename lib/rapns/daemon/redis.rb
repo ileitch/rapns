@@ -1,6 +1,6 @@
 require 'redis'
 
-require 'rapns/daemon/backend/redis/feeder'
+require 'rapns/daemon/redis/feeder'
 
 module Rapns
   module Daemon

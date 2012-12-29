@@ -4,6 +4,7 @@ gem 'rake'
 gem 'rspec'
 gem 'shoulda'
 gem 'rails'
+gem 'redis'
 
 platform :mri_19 do
   gem 'cane'

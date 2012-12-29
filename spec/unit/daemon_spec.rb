@@ -103,7 +103,7 @@ describe Rapns::Daemon, "when starting" do
   end
 
   it 'prints a warning exists if rapns has not been upgraded' do
-    Rapns::App.stub(:count).and_raise(ActiveRecord::StatementInvalid)
+    Rapns::App.stub(:count).and_raise(::ActiveRecord::StatementInvalid)
     Rapns::Daemon.should_receive(:puts).any_number_of_times
     Rapns::Daemon.should_receive(:exit).with(1)
     Rapns::Daemon.start
@@ -111,7 +111,7 @@ describe Rapns::Daemon, "when starting" do
 
   it 'does not exit if Rapns has not been upgraded and is embedded' do
     config.stub(:embedded => true)
-    Rapns::App.stub(:count).and_raise(ActiveRecord::StatementInvalid)
+    Rapns::App.stub(:count).and_raise(::ActiveRecord::StatementInvalid)
     Rapns::Daemon.should_receive(:puts).any_number_of_times
     Rapns::Daemon.should_not_receive(:exit)
     Rapns::Daemon.start
@@ -119,7 +119,7 @@ describe Rapns::Daemon, "when starting" do
 
   it 'does not exit if Rapns has not been upgraded and is in push mode' do
     config.stub(:push => true)
-    Rapns::App.stub(:count).and_raise(ActiveRecord::StatementInvalid)
+    Rapns::App.stub(:count).and_raise(::ActiveRecord::StatementInvalid)
     Rapns::Daemon.should_receive(:puts).any_number_of_times
     Rapns::Daemon.should_not_receive(:exit)
     Rapns::Daemon.start
@@ -133,7 +133,7 @@ describe Rapns::Daemon, "when starting" do
 
   it 'instantiates the backend' do
     Rapns::Daemon.start
-    Rapns::Daemon.backend.should be_kind_of(Rapns::Daemon::Backend::ActiveRecord)
+    Rapns::Daemon.backend.should be_kind_of(Rapns::Daemon::ActiveRecord)
   end
 end
 
@@ -147,15 +147,16 @@ describe Rapns::Daemon, "when being shutdown" do
     Rapns::Daemon::AppRunner.stub(:stop)
   end
 
-  # These tests do not work on JRuby.
-  unless Rapns.jruby?
-    it "shuts down when signaled signaled SIGINT" do
+  it "shuts down when signaled signaled SIGINT" do
+    unless Rapns.jruby?
       Rapns::Daemon.setup_signal_traps
       Rapns::Daemon.should_receive(:shutdown)
       Process.kill("SIGINT", Process.pid)
     end
+  end
 
-    it "shuts down when signaled signaled SIGTERM" do
+  it "shuts down when signaled signaled SIGTERM" do
+    unless Rapns.jruby?
       Rapns::Daemon.setup_signal_traps
       Rapns::Daemon.should_receive(:shutdown)
       Process.kill("SIGTERM", Process.pid)

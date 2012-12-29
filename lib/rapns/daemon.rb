@@ -3,7 +3,6 @@ require 'socket'
 require 'pathname'
 require 'openssl'
 require 'net/http/persistent'
-require 'active_support'
 
 require 'rapns/daemon/reflectable'
 require 'rapns/daemon/interruptible_sleep'
@@ -15,10 +14,23 @@ require 'rapns/daemon/logger'
 require 'rapns/daemon/app_runner'
 require 'rapns/daemon/delivery_handler'
 
-require 'rapns/daemon/apns'
-require 'rapns/daemon/gcm'
+require 'rapns/daemon/apns/delivery'
+require 'rapns/daemon/apns/disconnection_error'
+require 'rapns/daemon/apns/connection'
+require 'rapns/daemon/apns/app_runner'
+require 'rapns/daemon/apns/delivery_handler'
+require 'rapns/daemon/apns/feedback_receiver'
+
+require 'rapns/daemon/gcm/delivery'
+require 'rapns/daemon/gcm/app_runner'
+require 'rapns/daemon/gcm/delivery_handler'
 
 module Rapns
+  def self.require_for_daemon
+    require 'rapns/daemon'
+    require 'rapns/patches'
+  end
+
   module Daemon
     class << self
       attr_accessor :logger, :backend
@@ -52,8 +64,8 @@ module Rapns
 
     def self.setup_backend
       begin
-        require "rapns/daemon/backend/#{Rapns.config.backend}"
-        klass = "Rapns::Daemon::Backend::#{Rapns.config.backend.to_s.camelcase}".constantize
+        require "rapns/daemon/#{Rapns.config.backend}"
+        klass = "Rapns::Daemon::#{Rapns.config.backend.to_s.camelcase}".constantize
         self.backend = klass.new
       rescue LoadError => e
         logger.error("Failed to load '#{Rapns.config.backend}' backend.")
@@ -74,8 +86,8 @@ module Rapns
       count = 0
 
       begin
-        count = Rapns::App.count
-      rescue ActiveRecord::StatementInvalid
+        count = Rapns::ActiveRecord::App.count
+      rescue ::ActiveRecord::StatementInvalid
         puts "!!!! RAPNS NOT STARTED !!!!"
         puts
         puts "As of version v2.0.0 apps are configured in the database instead of rapns.yml."

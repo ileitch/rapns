@@ -19,9 +19,9 @@ module Rapns
         def start
           @thread = Thread.new do
             loop do
-              break if @stop
               check_for_feedback
               interruptible_sleep @poll
+              break if @stop
             end
           end
         end

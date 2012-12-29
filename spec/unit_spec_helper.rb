@@ -42,7 +42,7 @@ require 'generators/templates/add_gcm'
 
 [CreateRapnsNotifications, CreateRapnsFeedback,
  AddAlertIsJsonToRapnsNotifications, AddAppToRapns, CreateRapnsApps, AddGcm].each do |migration|
-  migration.down rescue ActiveRecord::StatementInvalid
+  migration.down rescue ::ActiveRecord::StatementInvalid
   migration.up
 end
 
@@ -57,9 +57,9 @@ DatabaseCleaner.strategy = :truncation
 require 'rapns'
 require 'rapns/daemon'
 
-Rapns::Notification.reset_column_information
-Rapns::App.reset_column_information
-Rapns::Apns::Feedback.reset_column_information
+Rapns::ActiveRecord::Notification.reset_column_information
+Rapns::ActiveRecord::App.reset_column_information
+Rapns::Apns::ActiveRecord::Feedback.reset_column_information
 
 RSpec.configure do |config|
   # config.before :suite do

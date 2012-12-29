@@ -3,7 +3,7 @@ require "unit_spec_helper"
 describe Rapns::Daemon::Apns::FeedbackReceiver, 'check_for_feedback' do
   let(:host) { 'feedback.push.apple.com' }
   let(:port) { 2196 }
-  let(:poll) { 60 }
+  let(:poll) { 0 }
   let(:certificate) { stub }
   let(:password) { stub }
   let(:app) { stub(:name => 'my_app', :password => password, :certificate => certificate) }
@@ -11,13 +11,12 @@ describe Rapns::Daemon::Apns::FeedbackReceiver, 'check_for_feedback' do
   let(:logger) { stub(:error => nil, :info => nil) }
   let(:receiver) { Rapns::Daemon::Apns::FeedbackReceiver.new(app, host, port, poll) }
   let(:feedback) { stub }
+  let(:backend) { stub(:create_apns_feedback => feedback) }
 
   before do
     receiver.stub(:interruptible_sleep)
-    Rapns::Daemon.logger = logger
+    Rapns::Daemon.stub(:logger => logger, :backend => backend)
     Rapns::Daemon::Apns::Connection.stub(:new => connection)
-    Rapns::Apns::Feedback.stub(:create! => feedback)
-    receiver.instance_variable_set("@stop", false)
   end
 
   def stub_connection_read_with_tuple
@@ -59,7 +58,7 @@ describe Rapns::Daemon::Apns::FeedbackReceiver, 'check_for_feedback' do
 
   it 'creates the feedback' do
     stub_connection_read_with_tuple
-    Rapns::Apns::Feedback.should_receive(:create!).with(:failed_at => Time.at(1323533325), :device_token => '834f786655eb9f84614a05ad7d00af31e5cfe93ac3ea078f1da44d2a4eb0ce17', :app => app)
+    backend.should_receive(:create_apns_feedback).with(Time.at(1323533325), '834f786655eb9f84614a05ad7d00af31e5cfe93ac3ea078f1da44d2a4eb0ce17', app)
     receiver.check_for_feedback
   end
 
@@ -72,10 +71,11 @@ describe Rapns::Daemon::Apns::FeedbackReceiver, 'check_for_feedback' do
 
   it 'sleeps for the feedback poll period' do
     receiver.stub(:check_for_feedback)
-    receiver.should_receive(:interruptible_sleep).with(60).at_least(:once)
+    receiver.should_receive(:interruptible_sleep).with(0).at_least(:once)
     Thread.stub(:new).and_yield
     receiver.stub(:loop).and_yield
     receiver.start
+    receiver.stop
   end
 
   it 'checks for feedback when started' do
@@ -83,6 +83,7 @@ describe Rapns::Daemon::Apns::FeedbackReceiver, 'check_for_feedback' do
     Thread.stub(:new).and_yield
     receiver.stub(:loop).and_yield
     receiver.start
+    receiver.stop
   end
 
   it 'interrupts sleep when stopped' do

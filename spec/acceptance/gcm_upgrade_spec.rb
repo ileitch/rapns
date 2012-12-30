@@ -4,9 +4,9 @@ describe 'GCM upgrade' do
   before do
     setup_rails
     generate
-    migrate('create_rapns_notifications', 'create_rapns_feedback',
-      'add_alert_is_json_to_rapns_notifications', 'add_app_to_rapns',
-      'create_rapns_apps')
+    migrate('rapns_create_notifications', 'rapns_create_feedback',
+      'rapns_add_alert_is_json_to_notifications', 'rapns_add_app_key_to_notifications',
+      'rapns_create_apps')
 
     as_test_rails_db do
       now = Time.now.to_s(:db)
@@ -21,7 +21,7 @@ describe 'GCM upgrade' do
       SQL
     end
 
-    migrate('add_gcm')
+    migrate('rapns_add_gcm_support')
   end
 
   it 'associates apps and notifications' do

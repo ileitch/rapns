@@ -16,7 +16,7 @@ module Rapns
 
   class HashableStruct < Struct
     def to_hash
-      Hash[members.zip(values)]
+      Hash[members.map(&:to_sym).zip(values)]
     end
   end
 

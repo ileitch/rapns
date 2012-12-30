@@ -1,6 +1,6 @@
-require "unit_spec_helper"
+require 'unit_spec_helper'
 
-describe Rapns::ActiveRecord::App do
+describe Rapns::App do
   it { should validate_numericality_of(:connections) }
 
   it 'validates the uniqueness of name within type and environment' do

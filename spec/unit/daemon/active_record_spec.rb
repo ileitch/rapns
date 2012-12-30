@@ -90,7 +90,7 @@ describe Rapns::Daemon::ActiveRecord do
 
   describe 'create_apns_feedback' do
     it 'creates the Feedback record' do
-      Rapns::Apns::ActiveRecord::Feedback.should_receive(:create!).with(
+      Rapns::Apns::Feedback.should_receive(:create!).with(
         :failed_at => now, :device_token => 'ab' * 32, :app => app)
       backend.create_apns_feedback(now, 'ab' * 32, app)
     end

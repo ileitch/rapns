@@ -33,15 +33,16 @@ puts "Using #{$adapter} adapter."
 
 ActiveRecord::Base.establish_connection(DATABASE_CONFIG[$adapter])
 
-require 'generators/templates/create_rapns_notifications'
-require 'generators/templates/create_rapns_feedback'
-require 'generators/templates/add_alert_is_json_to_rapns_notifications'
-require 'generators/templates/add_app_to_rapns'
-require 'generators/templates/create_rapns_apps'
-require 'generators/templates/add_gcm'
+require 'generators/templates/rapns_create_notifications'
+require 'generators/templates/rapns_create_feedback'
+require 'generators/templates/rapns_add_alert_is_json_to_notifications'
+require 'generators/templates/rapns_add_app_key_to_notifications'
+require 'generators/templates/rapns_create_apps'
+require 'generators/templates/rapns_add_gcm_support'
 
-[CreateRapnsNotifications, CreateRapnsFeedback,
- AddAlertIsJsonToRapnsNotifications, AddAppToRapns, CreateRapnsApps, AddGcm].each do |migration|
+[RapnsCreateNotifications, RapnsCreateFeedback,
+ RapnsAddAlertIsJsonToNotifications, RapnsAddAppKeyToNotifications,
+ RapnsCreateApps, RapnsAddGcmSupport].each do |migration|
   migration.down rescue ::ActiveRecord::StatementInvalid
   migration.up
 end
@@ -57,9 +58,9 @@ DatabaseCleaner.strategy = :truncation
 require 'rapns'
 require 'rapns/daemon'
 
-Rapns::ActiveRecord::Notification.reset_column_information
-Rapns::ActiveRecord::App.reset_column_information
-Rapns::Apns::ActiveRecord::Feedback.reset_column_information
+Rapns::Notification.reset_column_information
+Rapns::App.reset_column_information
+Rapns::Apns::Feedback.reset_column_information
 
 RSpec.configure do |config|
   # config.before :suite do

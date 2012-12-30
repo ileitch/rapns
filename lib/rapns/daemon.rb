@@ -26,11 +26,6 @@ require 'rapns/daemon/gcm/app_runner'
 require 'rapns/daemon/gcm/delivery_handler'
 
 module Rapns
-  def self.require_for_daemon
-    require 'rapns/daemon'
-    require 'rapns/patches'
-  end
-
   module Daemon
     class << self
       attr_accessor :logger, :backend
@@ -86,7 +81,7 @@ module Rapns
       count = 0
 
       begin
-        count = Rapns::ActiveRecord::App.count
+        count = Rapns::App.count
       rescue ::ActiveRecord::StatementInvalid
         puts "!!!! RAPNS NOT STARTED !!!!"
         puts

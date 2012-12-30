@@ -1,4 +1,4 @@
-class AddGcm < ActiveRecord::Migration
+class RapnsAddGcmSupport < ActiveRecord::Migration
   module Rapns
     class App < ActiveRecord::Base
       self.table_name = 'rapns_apps'
@@ -14,8 +14,8 @@ class AddGcm < ActiveRecord::Migration
     add_column :rapns_notifications, :type, :string, :null => true
     add_column :rapns_apps, :type, :string, :null => true
 
-    AddGcm::Rapns::Notification.update_all :type => 'Rapns::Apns::Notification'
-    AddGcm::Rapns::App.update_all :type => 'Rapns::Apns::App'
+    RapnsAddGcmSupport::Rapns::Notification.update_all :type => 'Rapns::Apns::Notification'
+    RapnsAddGcmSupport::Rapns::App.update_all :type => 'Rapns::Apns::App'
 
     change_column_null :rapns_notifications, :type, false
     change_column_null :rapns_apps, :type, false
@@ -53,7 +53,7 @@ class AddGcm < ActiveRecord::Migration
   end
 
   def self.down
-    AddGcm::Rapns::Notification.where(:type => 'Rapns::Gcm::Notification').delete_all
+    RapnsAddGcmSupport::Rapns::Notification.where(:type => 'Rapns::Gcm::Notification').delete_all
 
     remove_column :rapns_notifications, :type
     remove_column :rapns_apps, :type

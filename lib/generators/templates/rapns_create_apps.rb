@@ -1,4 +1,4 @@
-class CreateRapnsApps < ActiveRecord::Migration
+class RapnsCreateApps < ActiveRecord::Migration
   def self.up
     create_table :rapns_apps do |t|
       t.string    :key,             :null => false

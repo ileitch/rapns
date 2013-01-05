@@ -10,7 +10,6 @@ module Rapns
             relation = Rapns::Notification.ready_for_delivery.for_apps(apps)
             relation = relation.limit(batch_size) unless Rapns.config.push
             relation.all
-            # relation.each { |notification| yield(notification) }
           end
         end
       end

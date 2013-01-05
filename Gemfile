@@ -6,6 +6,8 @@ gem 'shoulda'
 gem 'rails'
 gem 'redis'
 
+gem 'modis', :github => 'ileitch/modis'
+
 platform :mri_19 do
   gem 'cane'
 end

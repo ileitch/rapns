@@ -51,8 +51,9 @@ if defined? ActiveRecord
 end
 
 if defined? Redis
-  require 'rapns/redis/notification'
+  require 'rapns/redis/key_helpers'
   require 'rapns/redis/app'
+  require 'rapns/redis/notification'
 
   require 'rapns/apns/redis/notification'
   require 'rapns/apns/redis/feedback'

@@ -36,7 +36,8 @@ require 'rapns/apns/device_token_format_validator'
 require 'rapns/apns/required_fields_validator'
 
 require 'rapns/gcm/expiry_collapse_key_mutual_inclusion_validator'
-require 'rapns/gcm/payload_size_validator'
+require 'rapns/gcm/payload_data_size_validator'
+require 'rapns/gcm/registration_ids_count_validator'
 
 if defined? ActiveRecord
   require 'rapns/notification'

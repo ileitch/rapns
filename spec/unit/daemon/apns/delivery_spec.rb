@@ -65,6 +65,12 @@ describe Rapns::Daemon::Apns::Delivery do
     perform
   end
 
+  it 'does not mark delivered insane_notify config option is true' do
+    config.stub(:insane_notify => true)
+    delivery.should_not_receive(:mark_delivered)
+    perform
+  end
+
   describe "when delivery fails" do
     before { connection.stub(:select => true, :read => [8, 4, 69].pack("ccN")) }
 

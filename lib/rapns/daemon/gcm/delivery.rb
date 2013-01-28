@@ -46,7 +46,7 @@ module Rapns
           body = multi_json_load(response.body)
 
           if body['failure'].to_i == 0
-            mark_delivered
+            mark_delivered unless Rapns.config.insane_notify
             Rapns::Daemon.logger.info("[#{@app.name}] #{@notification.id} sent to #{@notification.registration_ids.join(', ')}")
           else
             handle_errors(response, body)

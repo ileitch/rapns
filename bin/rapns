@@ -19,6 +19,7 @@ ARGV.options do |opts|
   opts.on('-P N', '--db-poll N', Integer, "Frequency in seconds to check for new notifications. Default: #{config.push_poll}.") { |n| config.push_poll = n }
   opts.on('-F N', '--feedback-poll N', Integer, "Frequency in seconds to check for feedback. Default: #{config.feedback_poll}.") { |n| config.feedback_poll = n }
   opts.on('-e', '--no-error-checks', 'Disable APNs error checking after notification delivery.') { config.check_for_errors = false }
+  opts.on('-i', '--insane-notify', 'Mark delivered bofore notification delivery.') { config.insane_notify = true }
   opts.on('-n', '--no-airbrake-notify', 'Disables error notifications via Airbrake.') { config.airbrake_notify = false }
   opts.on('-p PATH', '--pid-file PATH', String, 'Path to write PID file. Relative to Rails root unless absolute.') { |path| config.pid_file = path }
   opts.on('-b N', '--batch-size N', Integer, 'ActiveRecord notifications batch size.') { |n| config.batch_size = n }

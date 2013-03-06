@@ -18,19 +18,16 @@ module Rapns
         end
 
         def start
-          @thread = Thread.new do
+          @thread = Thread.new(@poll) do |poll|
             loop do
-              break if @stop
               check_for_feedback
-              interruptible_sleep @poll
+              sleep poll
             end
           end
         end
 
         def stop
-          @stop = true
-          interrupt_sleep
-          @thread.join if @thread
+          @thread.exit if @thread && @thread.alive?
         end
 
         def check_for_feedback

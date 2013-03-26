@@ -30,6 +30,12 @@ describe Rapns::Daemon::Gcm::Delivery do
       end.to change(notification, :delivered).to(true)
     end
 
+    it 'does not mark delivered insane_notify config option is true' do
+      config.stub(:insane_notify => true)
+      delivery.should_not_receive(:mark_delivered)
+      perform
+    end
+
     it 'reflects the notification was delivered' do
       response.stub(:body => JSON.dump({ 'failure' => 0 }))
       delivery.should_receive(:reflect).with(:notification_delivered, notification)

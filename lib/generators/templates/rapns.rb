@@ -17,6 +17,9 @@
   # Disable APNs error checking after notification delivery.
   # config.check_for_errors = true
 
+  # Mark delivered bofore notification delivery.
+  # config.insane_notify = false
+
   # ActiveRecord notifications batch size.
   # config.batch_size = 5000
 

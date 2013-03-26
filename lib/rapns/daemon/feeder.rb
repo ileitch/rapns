@@ -43,7 +43,9 @@ module Rapns
             idle = Rapns::Daemon::AppRunner.idle.map(&:app)
             relation = Rapns::Notification.ready_for_delivery.for_apps(idle)
             relation = relation.limit(batch_size) unless Rapns.config.push
-            relation.each do |notification|
+            notifications = relation.to_a
+            relation.update_all delivered: true if Rapns.config.insane_notify
+            notifications.each do |notification|
               Rapns::Daemon::AppRunner.enqueue(notification)
               reflect(:notification_enqueued, notification)
             end

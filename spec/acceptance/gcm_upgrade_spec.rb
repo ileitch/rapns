@@ -21,7 +21,7 @@ describe 'GCM upgrade' do
       SQL
     end
 
-    migrate('add_gcm')
+    migrate('add_gcm', 'add_rails_env_to_rapns_app')
   end
 
   it 'associates apps and notifications' do

@@ -21,13 +21,22 @@ describe 'GCM upgrade' do
       SQL
     end
 
-    migrate('add_gcm', 'add_rails_env_to_rapns_app')
+    migrate('add_gcm')
+
+    migrate('add_rails_env_to_rapns_app')
+
+    as_test_rails_db do
+      ActiveRecord::Base.connection.execute <<-SQL
+        UPDATE rapns_apps SET rails_env='#{Rails.env}'
+      SQL
+    end
   end
 
   it 'associates apps and notifications' do
     as_test_rails_db do
       app = Rapns::Apns::App.first
       app.name.should == 'test'
+      app.rails_env.should == Rails.env
       app.notifications.count.should == 1
     end
   end

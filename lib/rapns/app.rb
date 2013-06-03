@@ -2,7 +2,7 @@ module Rapns
   class App < ActiveRecord::Base
     self.table_name = 'rapns_apps'
 
-    attr_accessible :name, :environment, :certificate, :password, :connections, :auth_key
+    attr_accessible :name, :environment, :certificate, :password, :connections, :auth_key, :rails_env
 
     has_many :notifications, :class_name => 'Rapns::Notification'
 
@@ -10,6 +10,10 @@ module Rapns
     validates_numericality_of :connections, :greater_than => 0, :only_integer => true
 
     validate :certificate_has_matching_private_key
+
+    before_validation :set_rails_env, :on => :create, :unless => :rails_env?
+
+    default_scope { where(:rails_env => Rails.env) }
 
     private
 
@@ -24,6 +28,10 @@ module Rapns
         end
       end
       result
+    end
+
+    def set_rails_env
+      self.rails_env = Rails.env
     end
   end
 end

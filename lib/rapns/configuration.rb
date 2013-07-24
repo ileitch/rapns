@@ -5,6 +5,7 @@ module Rapns
 
   def self.configure
     yield config if block_given?
+    Rapns.init_orm
   end
 
   CONFIG_ATTRS = [:foreground, :push_poll, :feedback_poll, :embedded,

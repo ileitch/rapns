@@ -2,6 +2,9 @@
 
  Rapns.configure do |config|
 
+  # Setup orm backend (default to active_record)
+  # require 'rapns/orm/{active_record|mongoid}' 
+
   # Run in the foreground?
   # config.foreground = false
 

@@ -51,6 +51,8 @@ module Rapns
                 notification = Rapns::Apns::Notification.where(validation_id: notification_id).first
                 error = Rapns::DeliveryError.new(code, notification ? notification.id : 0, description)
               end
+              
+              error
             else
               error = Rapns::Apns::DisconnectionError.new
             end

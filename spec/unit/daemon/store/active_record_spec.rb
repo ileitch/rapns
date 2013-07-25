@@ -1,5 +1,4 @@
 require 'unit_spec_helper'
-require 'rapns/daemon/store/active_record'
 
 describe Rapns::Daemon::Store::ActiveRecord do
   let(:app) { Rapns::Apns::App.create!(:name => 'my_app', :environment => 'development', :certificate => TEST_CERT) }

@@ -2,7 +2,7 @@ class RapnsGenerator < Rails::Generators::Base
   include Rails::Generators::Migration
   source_root File.expand_path('../templates', __FILE__)
 
-  hook_for :mongoid, type: :boolean
+  class_option :mongoid, type: :boolean, default: false
 
   def self.next_migration_number(path)
     @time ||= Time.now.utc
@@ -10,9 +10,9 @@ class RapnsGenerator < Rails::Generators::Base
     @calls += 1
     (@time + @calls.seconds).strftime("%Y%m%d%H%M%S")
   end
-
+  
   def copy_migration
-    if !mongoid
+    if !options.mongoid?
       add_rapns_migration('create_rapns_notifications')
       add_rapns_migration('create_rapns_feedback')
       add_rapns_migration('add_alert_is_json_to_rapns_notifications')

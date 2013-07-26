@@ -9,7 +9,8 @@ module Rapns
 
   CONFIG_ATTRS = [:foreground, :push_poll, :feedback_poll, :embedded,
     :airbrake_notify, :check_for_errors, :pid_file, :batch_size,
-    :push, :store, :logger]
+    :push, :store, :logger, :redis_host, :redis_port,
+    :number_of_connections, :connection_timeout, :stalled_notification_tolerence]
 
   class ConfigurationWithoutDefaults < Struct.new(*CONFIG_ATTRS)
   end
@@ -78,6 +79,13 @@ module Rapns
       # Internal options.
       self.embedded = false
       self.push = false
+
+      # Redis store
+      self.redis_host = "localhost"
+      self.redis_port = 6793
+      self.number_of_connections = 5
+      self.connection_timeout = 1
+      self.stalled_notification_tolerence = 3600
     end
   end
 end

@@ -61,6 +61,7 @@ DatabaseCleaner.strategy = :truncation
 
 require 'rapns'
 require 'rapns/daemon'
+require 'mock_redis'
 
 Rapns::Notification.reset_column_information
 Rapns::App.reset_column_information
@@ -82,6 +83,12 @@ RSpec.configure do |config|
     Rapns.logger = nil
     Rapns::Daemon.store = nil
     Rapns.config.set_defaults if Rapns.config.kind_of?(Rapns::Configuration)
+  end
+
+  config.before(:each, :mock_redis => true) do
+    mock_redis = MockRedis.new
+    Redis.current = mock_redis
+    Redis.stub(:new).and_return(mock_redis)
   end
 end
 

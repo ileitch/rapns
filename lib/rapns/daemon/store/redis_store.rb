@@ -52,12 +52,11 @@ module Rapns
         end
 
         def mark_delivered(notification)
-          with_redis_reconnect_and_retry do |redis|
-            redis.zrem PROCESSING_QUEUE_NAME, Rapns::RedisArTransporter.new(notification)
-          end
+          remove_notification_in_processing(notification)
         end
 
         def mark_failed(notification, code, description)
+          remove_notification_in_processing(notification)
           with_database_reconnect_and_retry do
             #return if Rapns::Notification.exists?(notification.id)
             notification.delivered = false
@@ -96,6 +95,12 @@ module Rapns
         end
 
         protected
+
+        def remove_notification_in_processing(notification)
+          with_redis_reconnect_and_retry do |redis|
+            redis.zrem PROCESSING_QUEUE_NAME, Rapns::RedisArTransporter.new(notification)
+          end
+        end
 
         def move_retries_into_pending(redis)
           retries = redis.zrangebyscore(RETRIES_QUEUE_NAME, '-inf', Time.now.utc.to_i)

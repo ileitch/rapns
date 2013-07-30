@@ -353,6 +353,14 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
 
     let(:notification) { build_rapns_notification }
 
+    it "removes the notification from the processing queue" do
+      transporter = Rapns::RedisArTransporter.new(notification)
+      Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, transporter
+      expect(length_of_processing_queue).to eq 1
+      store.mark_failed(notification, nil, '')
+      expect(length_of_processing_queue).to be_zero
+    end
+
     it 'marks the notification as not delivered' do
       store.mark_failed(notification, nil, '')
       notification.delivered.should be_false

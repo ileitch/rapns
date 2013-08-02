@@ -82,7 +82,7 @@ module Rapns
 
       # Redis store
       self.redis_host = "localhost"
-      self.redis_port = 6793
+      self.redis_port = 6379
       self.number_of_connections = 5
       self.connection_timeout = 1
       self.stalled_notification_tolerence = 3600

@@ -2,6 +2,7 @@ require 'redis'
 
 require 'rapns/daemon/store/redis_store/reconnectable'
 require 'rapns/daemon/store/active_record/reconnectable'
+require 'rapns/daemon/store/redis_store/redis_ar_transporter'
 
 module Rapns
   module Daemon

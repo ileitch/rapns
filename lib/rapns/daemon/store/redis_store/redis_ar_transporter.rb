@@ -27,7 +27,11 @@ module Rapns
 
     def to_ar
       temp_attributes = get_attributes(@object)
-      notif = build_rapns_notification(temp_attributes)
+      permitted_attributes = temp_attributes.dup
+      permitted_attributes.delete(:id)
+      permitted_attributes.delete(:type)
+      permitted_attributes.delete(:retries)
+      notif = build_rapns_notification(permitted_attributes, temp_attributes[:type])
 
       #These attributes cannot be mass assigned
       notif.id = temp_attributes[:id]
@@ -44,8 +48,8 @@ module Rapns
 
     protected
 
-    def build_rapns_notification(attributes_hash)
-      if iphone?(attributes_hash[:type])
+    def build_rapns_notification(attributes_hash, device_type)
+      if iphone?(device_type)
         Rapns::Apns::Notification.new(attributes_hash)
       else
         Rapns::Gcm::Notification.new(attributes_hash)

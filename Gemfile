@@ -6,6 +6,10 @@ gem 'rails', '~> 3.2'
 gem 'database_cleaner'
 gem 'simplecov'
 
+gem 'connection_pool'
+gem 'redis', '~> 3.0.4'
+gem 'mock_redis'
+
 platform :mri_19, :mri_20 do
   gem 'cane'
 end

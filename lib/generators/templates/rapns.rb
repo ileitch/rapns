@@ -26,7 +26,17 @@
   # Define a custom logger.
   # config.logger = MyLogger.new
 
- end
+  # config.store = :redis_store
+  
+  # config.redis_host = "localhost"
+  # config.redis_port = 6379
+  # config.number_of_connections = 5
+  # config.connection_timeout = 1
+  # config.stalled_notification_tolerence = 3600
+
+end
+
+#Rapns::Notification.send(:include, Rapns::NotificationAsRedisObject)
 
 Rapns.reflect do |on|
 

@@ -2,9 +2,34 @@ require 'redis'
 
 require 'rapns/daemon/store/redis_store/reconnectable'
 require 'rapns/daemon/store/active_record/reconnectable'
-require 'rapns/daemon/store/redis_store/redis_ar_transporter'
+
+# require 'active_support/core_ext/marshal'
 
 module Rapns
+
+  module NotificationAsRedisObject
+
+    def self.included(base)
+      base.extend ClassMethods
+    end
+
+    def save_to_redis
+      self.id = Redis.current.incr('rapns:notifications:counter') if self.id.nil?
+      Redis.current.rpush('rapns:notifications:pending', dump_redis_value)
+    end
+
+    def dump_redis_value
+      Marshal.dump(self)
+    end
+
+    module ClassMethods
+      def marshal_redis_value(redis_value)
+        Marshal.load(redis_value)
+      end
+    end
+
+  end
+
   module Daemon
     module Store
       class RedisStore
@@ -40,15 +65,13 @@ module Rapns
         end
 
         def retry_after(notification, deliver_after)
-          transport = Rapns::RedisArTransporter.new(notification)
-
           with_redis_reconnect_and_retry do |redis|
-            redis.zrem PROCESSING_QUEUE_NAME, transport
+            redis.zrem PROCESSING_QUEUE_NAME, notification.dump_redis_value
 
             notification.retries += 1
             notification.deliver_after = deliver_after
 
-            redis.zadd RETRIES_QUEUE_NAME, deliver_after.utc.to_i, transport
+            redis.zadd RETRIES_QUEUE_NAME, deliver_after.utc.to_i, notification.dump_redis_value
           end
         end
 
@@ -77,12 +100,16 @@ module Rapns
         end
 
         def create_gcm_notification(attrs, data, registration_ids, deliver_after, app)
-          attributes_hash = { type: 'Rapns::Gcm::Notification', data: data, registration_ids: registration_ids, deliver_after: deliver_after, app_id: app.id }
-          transport = Rapns::RedisArTransporter.new(attributes_hash.merge(attrs))
+          notification = Rapns::Gcm::Notification.new
+          notification.assign_attributes(attrs)
+          notification.data = data
+          notification.registration_ids = registration_ids
+          notification.deliver_after = deliver_after
+          notification.app = app
           with_redis_reconnect_and_retry do |redis|
-            redis.rpush PENDING_QUEUE_NAME, transport
+            redis.rpush PENDING_QUEUE_NAME, notification.dump_redis_value
           end
-          transport.to_ar
+          notification
         end
 
         def after_daemonize
@@ -91,7 +118,7 @@ module Rapns
 
         def build_notifications(list_of_notif_hashes)
           list_of_notif_hashes.collect do |notif_hash|
-            Rapns::RedisArTransporter.new(notif_hash).to_ar
+            Rapns::Notification.marshal_redis_value(notif_hash)
           end
         end
 
@@ -99,7 +126,7 @@ module Rapns
 
         def remove_notification_in_processing(notification)
           with_redis_reconnect_and_retry do |redis|
-            redis.zrem PROCESSING_QUEUE_NAME, Rapns::RedisArTransporter.new(notification)
+            redis.zrem PROCESSING_QUEUE_NAME, notification.dump_redis_value
           end
         end
 

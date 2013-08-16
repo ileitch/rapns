@@ -1,16 +1,14 @@
 require 'unit_spec_helper'
 
 require 'rapns/daemon/store/redis_store'
-require 'rapns/daemon/store/redis_store/redis_creator'
-require 'rapns/daemon/store/redis_store/redis_ar_transporter'
 
 describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
 
   let(:token_prefix) { "a" * 63 }
   let(:store) { Rapns::Daemon::Store::RedisStore.new }
-  let(:creator) { Rapns::RedisCreator.new }
 
   before do
+    Rapns::Notification.send(:include, Rapns::NotificationAsRedisObject)
     @iphone_app = Rapns::Apns::App.create!(name: 'iphone_app', environment: 'development', certificate: TEST_CERT)
     @android_app = Rapns::Gcm::App.create!(name: 'android_app', environment: 'development', auth_key: 'RANDOMAUTHKEY')
   end
@@ -68,50 +66,48 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
   describe 'deliverable_notifications' do
 
     it "loads all the notifications from the pending queue" do
-      expected_notifications = create_notifications(5) { |i| build_notification_hash(device_token: token_prefix + i.to_s) }
+      expected_notifications = create_notifications(5) { |i| create_apns_notification(device_token: token_prefix + i.to_s) }
 
-      notifications = store.deliverable_notifications(@android_app)
+      notifications = store.deliverable_notifications(@iphone_app)
       expect_correct_notfications expected_notifications, notifications
     end
 
     it "removes and puts the notifications in the processing queue" do
       number_of_notifications = 5
-      create_notifications(number_of_notifications) { |i| build_notification_hash(device_token: token_prefix + i.to_s) }
+      create_notifications(number_of_notifications) { |i| create_apns_notification(device_token: token_prefix + i.to_s) }
 
       expect(length_of_pending_queue).to eq number_of_notifications
       expect(length_of_processing_queue).to be_zero
 
-      store.deliverable_notifications(@android_app)
+      store.deliverable_notifications(@iphone_app)
 
       expect(length_of_pending_queue).to be_zero
       expect(length_of_processing_queue).to eq number_of_notifications
     end
 
     it "returns apns notification objects" do
-      payload = {alert: "Roomorama Rocks!", custom_properties: {'inquiry_id' => '1'}}
-      notification = build_notification_hash(device_type: "iphone", payload: payload)
+      notification = create_apns_notification
 
       expected_notification = store.deliverable_notifications(@iphone_app).first
       expect(expected_notification.class).to eq Rapns::Apns::Notification
-      expect(expected_notification.data).to eq notification[:data]
+      expect(expected_notification.alert).to eq notification.alert
       expect(expected_notification.id).to eq 1
     end
 
     it "returns gcm notification objects" do
-      payload = {alert: {'message' => 'Roomorama Rocks!'}, custom_properties: {'inquiry_id' => '1'}}
-      notification = build_notification_hash(payload: payload)
+      notification = create_gcm_notification
       
-      expected_notification = store.deliverable_notifications(@android_app).first
+      expected_notification = store.deliverable_notifications(@iphone_app).first
       expect(expected_notification.class).to eq Rapns::Gcm::Notification
-      expect(expected_notification.data).to eq notification[:data]
+      expect(expected_notification.data).to eq notification.data
       expect(expected_notification.id).to eq 1
     end
 
     it "retreives notification in batches" do
       Rapns.config.batch_size = 5
-      create_notifications(Rapns.config.batch_size + 1) { |i| build_notification_hash(device_token: token_prefix + i.to_s) }
+      create_notifications(Rapns.config.batch_size + 1) { |i| create_apns_notification(device_token: token_prefix + i.to_s) }
 
-      store.deliverable_notifications(@android_app)
+      store.deliverable_notifications(@iphone_app)
 
       expect(length_of_processing_queue).to eq Rapns.config.batch_size
       expect(length_of_pending_queue).to eq 1
@@ -122,13 +118,13 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
       before do
         @number_of_retries = 5
         @number_of_retries.times do
-          notif = build_rapns_notification
+          notif = build_apns_notification
           store.retry_after(notif, 5.minutes.ago)
         end
 
         @number_of_pending_retries = 3
         @number_of_pending_retries.times do
-          notif = build_rapns_notification
+          notif = build_apns_notification
           store.retry_after(notif, 5.minutes.from_now)
         end
 
@@ -136,25 +132,25 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
       end
 
       it "puts the retries that has a deliver_after time in the past into the pending queue" do
-        expect(length_of_pending_queue).to be_zero
+        expect(length_of_pending_queue).to eq 0
 
-        store.deliverable_notifications(@android_app)
+        store.deliverable_notifications(@iphone_app)
 
         expect(length_of_pending_queue).to eq @number_of_retries
       end
 
       it "puts the retries into the front of the pending queue" do
         Rapns.config.batch_size = 5
-        pending_notifications = create_notifications(6) { |i| build_notification_hash(device_token: token_prefix + i.to_s) }
+        pending_notifications = create_notifications(6) { |i| create_apns_notification(device_token: token_prefix + i.to_s) }
 
-        store.deliverable_notifications(@android_app)
+        store.deliverable_notifications(@iphone_app)
 
         notifications = get_notifications_in_pending_queue
-        expect(notifications.last.id).to eq pending_notifications.last[:id]
+        expect(notifications.last.id).to eq pending_notifications.last.id
       end
 
       it "leaves retries in the future in the retries queue" do
-        store.deliverable_notifications(@android_app)
+        store.deliverable_notifications(@iphone_app)
 
         expect(length_of_retries_queue).to eq @number_of_pending_retries
       end
@@ -171,41 +167,39 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
 
         @num_of_tolerated = 2
         @num_of_tolerated.times do
-          notif = build_rapns_notification
-          transporter = Rapns::RedisArTransporter.new(notif)
-          Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, tolerated_score, transporter
+          notif = build_apns_notification
+          Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, tolerated_score, notif.dump_redis_value
         end
 
         @num_of_untolerated = 3
         @num_of_untolerated.times do
-          notif = build_rapns_notification
-          transporter = Rapns::RedisArTransporter.new(notif)
-          Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, untolerated_score, transporter
+          notif = build_apns_notification
+          Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, untolerated_score, notif.dump_redis_value
         end
       end
 
       it "puts stalled notifications whose age is more than 1 feedback poll time into the pending queue" do
         expect(length_of_pending_queue).to be_zero
 
-        store.deliverable_notifications(@android_app)
+        store.deliverable_notifications(@iphone_app)
 
         expect(length_of_pending_queue).to eq @num_of_tolerated
       end
 
       it "puts stalled notifications into the front of the pending queue" do
         Rapns.config.batch_size = 5
-        pending_notifications = create_notifications(6) { |i| build_notification_hash(device_token: token_prefix + i.to_s) }
+        pending_notifications = create_notifications(6) { |i| create_apns_notification(device_token: token_prefix + i.to_s) }
 
-        store.deliverable_notifications(@android_app)
+        store.deliverable_notifications(@iphone_app)
 
         notifications = get_notifications_in_pending_queue
-        expect(notifications.last.id).to eq pending_notifications.last[:id]
+        expect(notifications.last.id).to eq pending_notifications.last.id
       end
 
       it "removes stalled notifications whose age is more than tolerated" do
         expect(length_of_processing_queue).to eq (@num_of_tolerated+@num_of_untolerated)
 
-        store.deliverable_notifications(@android_app)
+        store.deliverable_notifications(@iphone_app)
 
         expect(length_of_processing_queue).to be_zero
       end
@@ -215,13 +209,12 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
         other_notifications = []
         other_notifications_count = 5
         other_notifications_count.times do
-          notif = build_rapns_notification
+          notif = build_apns_notification
           other_notifications << notif
-          transporter = Rapns::RedisArTransporter.new(notif)
-          Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, score, transporter
+          Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, score, notif.dump_redis_value
         end
 
-        store.deliverable_notifications(@android_app)
+        store.deliverable_notifications(@iphone_app)
 
         expect(length_of_processing_queue).to eq other_notifications_count
 
@@ -236,11 +229,11 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
   end
 
   describe 'retry_after' do
-    let(:expected_notification) { build_rapns_notification }
-    let(:transport) { Rapns::RedisArTransporter.new(expected_notification) }
+    let(:expected_notification) { build_apns_notification }
+    let(:redis_value) { expected_notification.dump_redis_value }
 
     before do
-      Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, transport
+      Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, redis_value
     end
 
     it "removes notificaiton from the processing queue into the retries queue" do
@@ -257,16 +250,15 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
       retry_time = 5.minutes.from_now
       store.retry_after(expected_notification, retry_time)
 
-      actual_score = Redis.current.zscore(Rapns::Daemon::Store::RedisStore::RETRIES_QUEUE_NAME, transport)
+      actual_score = Redis.current.zscore(Rapns::Daemon::Store::RedisStore::RETRIES_QUEUE_NAME, expected_notification.dump_redis_value)
       expect(actual_score).to eq retry_time.utc.to_i
     end
 
     it "removes the correct notificaton from processing queue" do
       other_notifications_count = 2
       other_notifications_count.times do
-        notif =  build_rapns_notification
-        transporter = Rapns::RedisArTransporter.new(notif)
-        Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, transporter
+        notif =  build_apns_notification
+        Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, notif.dump_redis_value
       end
 
       store.retry_after(expected_notification, 5.minutes.from_now)
@@ -282,9 +274,8 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
     it "inserts the correct notification into the retries queue" do
       other_notifications_count = 2
       other_notifications_count.times do
-        notif = build_rapns_notification
-        transporter = Rapns::RedisArTransporter.new(notif)
-        Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, transporter
+        notif = build_apns_notification
+        Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, notif.dump_redis_value
       end
 
       store.retry_after(expected_notification, 5.minutes.from_now)
@@ -319,9 +310,8 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
   describe 'mark_delivered' do
 
     before do
-      @notification = build_rapns_notification
-      transporter = Rapns::RedisArTransporter.new(@notification)
-      Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, transporter
+      @notification = build_apns_notification
+      Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, @notification.dump_redis_value
     end
 
     it "removes the notification from the processing queue" do
@@ -334,9 +324,8 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
 
     it "removes the correct notification" do
       create_notifications(2) do |i|
-        notification = build_rapns_notification
-        transporter = Rapns::RedisArTransporter.new(notification)
-        Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, transporter
+        notification = build_apns_notification
+        Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, notification.dump_redis_value
       end
 
       store.mark_delivered(@notification)
@@ -351,11 +340,10 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
 
   describe 'mark_failed' do
 
-    let(:notification) { build_rapns_notification }
+    let(:notification) { build_apns_notification }
 
     it "removes the notification from the processing queue" do
-      transporter = Rapns::RedisArTransporter.new(notification)
-      Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, transporter
+      Redis.current.zadd Rapns::Daemon::Store::RedisStore::PROCESSING_QUEUE_NAME, Time.now.utc.to_i, notification.dump_redis_value
       expect(length_of_processing_queue).to eq 1
       store.mark_failed(notification, nil, '')
       expect(length_of_processing_queue).to be_zero
@@ -408,17 +396,37 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
     it 'creates the Feedback record' do
       now = Time.now
       Rapns::Apns::Feedback.should_receive(:create!).with(
-        :failed_at => now, :device_token => 'ab' * 32, :app => @android_app)
-      store.create_apns_feedback(now, 'ab' * 32, @android_app)
+        :failed_at => now, :device_token => 'ab' * 32, :app => @iphone_app)
+      store.create_apns_feedback(now, 'ab' * 32, @iphone_app)
     end
   end
 
   describe 'create_gcm_notification' do
     let(:data) { { :data => true } }
-    let(:attributes) { { :retries => '24' } }
+    let(:attributes) { { :device_token => 'ab' * 32 } }
     let(:registration_ids) { ['123', '456'] }
     let(:deliver_after) { Time.now + 10.seconds }
     let(:args) { [attributes, data, registration_ids, deliver_after, @android_app] }
+
+    it 'sets the given attributes' do
+      new_notification = store.create_gcm_notification(*args)
+      expect(new_notification.device_token).to eq 'ab' * 32
+    end
+
+    it 'sets the given data' do
+      new_notification = store.create_gcm_notification(*args)
+      expect(new_notification.data['data']).to be_true
+    end
+
+    it 'sets the given registration IDs' do
+      new_notification = store.create_gcm_notification(*args)
+      expect(new_notification.registration_ids).to eq registration_ids
+    end
+
+    it 'sets the deliver_after timestamp' do
+      new_notification = store.create_gcm_notification(*args)
+      expect(new_notification.deliver_after).to be_within(1.second).of(deliver_after)
+    end
 
     it 'saves the new notification' do
       expect(length_of_pending_queue).to be_zero
@@ -426,41 +434,34 @@ describe Rapns::Daemon::Store::RedisStore, mock_redis: true do
       expect(length_of_pending_queue).to eq 1
     end
 
-    it 'sets the given attributes' do
-      store.create_gcm_notification(*args)
-      new_notification = get_last_notification_from_pending_queue
-      expect(new_notification.retries).to eq 24
-    end
-
-    it 'sets the given data' do
-      store.create_gcm_notification(*args)
-      new_notification = get_last_notification_from_pending_queue
-      expect(new_notification.data['data']).to be_true
-    end
-
-    it 'sets the given registration IDs' do
-      store.create_gcm_notification(*args)
-      new_notification = get_last_notification_from_pending_queue
-      expect(new_notification.registration_ids).to eq registration_ids
-    end
-
-    it 'sets the deliver_after timestamp' do
-      store.create_gcm_notification(*args)
-      new_notification = get_last_notification_from_pending_queue
-      expect(new_notification.deliver_after).to be_within(1.second).of(deliver_after)
-    end
   end
 
-  def build_rapns_notification
-    Rapns::Apns::Notification.create!(:device_token => "a" * 64, :app => @iphone_app)
+  def build_apns_notification(options={})
+    notification = Rapns::Apns::Notification.new(app: @iphone_app)
+    notification.id = Redis.current.incr('rapns:notifications:counter')
+    notification.device_token = options[:device_token] || token_prefix + "0"
+    notification.alert = options[:alert] || "Roomorama rocks!"
+    notification
   end
 
-  def build_notification_hash(options=nil)
-    options ||= []
-    options[:device_type] ||= "android"
-    options[:device_token] ||= token_prefix + "0"
-    options[:payload] ||= {alert: "testing"}
-    creator.create(options[:device_type], options[:device_token], options[:payload])
+  def build_gcm_notification(options={})
+    notification = Rapns::Gcm::Notification.new(app: @android_app)
+    notification.id = Redis.current.incr('rapns:notifications:counter')
+    notification.registration_ids = [(options[:registration_id] || token_prefix + "0")]
+    notification.data = {message: options[:message] || "Roomorama rocks!"}
+    notification
+  end
+
+  def create_apns_notification(options={})
+    notification = build_apns_notification(options)
+    notification.save_to_redis
+    notification
+  end
+
+  def create_gcm_notification(options={})
+    notification = build_gcm_notification(options)
+    notification.save_to_redis
+    notification
   end
 
 end

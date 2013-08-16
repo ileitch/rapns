@@ -34,7 +34,9 @@
   # config.connection_timeout = 1
   # config.stalled_notification_tolerence = 3600
 
- end
+end
+
+#Rapns::Notification.send(:include, Rapns::NotificationAsRedisObject)
 
 Rapns.reflect do |on|
 

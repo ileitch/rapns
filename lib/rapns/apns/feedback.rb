@@ -4,7 +4,6 @@ module Rapns
       if Rapns.config.store == :active_record
         self.table_name = 'rapns_feedback'
       else
-        store_in collection: 'rapns_feedback'
         
         field :device_token, type: String
         field :failed_at,    type: DateTime

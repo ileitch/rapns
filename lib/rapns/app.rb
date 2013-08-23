@@ -3,7 +3,6 @@ module Rapns
     if Rapns.config.store == :active_record
       self.table_name = 'rapns_apps'
     else
-      store_in collection: 'rapns_apps'
       
       field :name,        type: String
       field :environment, type: String

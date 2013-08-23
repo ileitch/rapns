@@ -16,6 +16,8 @@ platform :ruby do
   gem 'mysql'
   gem 'yajl-ruby'
   gem 'sqlite3'
+  gem 'mongoid'
+  gem 'mongoid-autoinc'
   #gem 'perftools.rb'
 end
 

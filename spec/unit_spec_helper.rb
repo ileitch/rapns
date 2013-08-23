@@ -62,6 +62,10 @@ DatabaseCleaner.strategy = :truncation
 require 'rapns'
 require 'rapns/daemon'
 
+Rapns.configure do |config|
+  require 'rapns/orm/active_record' 
+end
+
 Rapns::Notification.reset_column_information
 Rapns::App.reset_column_information
 Rapns::Apns::Feedback.reset_column_information

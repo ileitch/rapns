@@ -1,7 +1,19 @@
 module Rapns
-  class App < ActiveRecord::Base
-    self.table_name = 'rapns_apps'
-
+  class App < Rapns::RecordBase
+    if Rapns.config.store == :active_record
+      self.table_name = 'rapns_apps'
+    else
+      
+      field :name,        type: String
+      field :environment, type: String
+      field :certificate, type: String
+      field :password,    type: String
+      field :connections, type: Integer, default: 1
+      field :auth_key,    type: String
+      
+      has_many :feedbacks, :class_name => 'Rapns::Apns::Feedback'
+    end
+    
     if Rapns.attr_accessible_available?
       attr_accessible :name, :environment, :certificate, :password, :connections, :auth_key
     end

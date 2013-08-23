@@ -42,9 +42,17 @@ module Rapns
 
             if tuple = @connection.read(ERROR_TUPLE_BYTES)
               cmd, code, notification_id = tuple.unpack("ccN")
-
+              
               description = APN_ERRORS[code.to_i] || "Unknown error. Possible rapns bug?"
-              error = Rapns::DeliveryError.new(code, notification_id, description)
+              
+              if Rapns.config.store == :active_record
+                error = Rapns::DeliveryError.new(code, notification_id, description)
+              else
+                notification = Rapns::Apns::Notification.where(validation_id: notification_id).first
+                error = Rapns::DeliveryError.new(code, notification ? notification.id : 0, description)
+              end
+              
+              error
             else
               error = Rapns::Apns::DisconnectionError.new
             end

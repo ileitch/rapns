@@ -4,7 +4,7 @@ describe Rapns::Daemon::Apns::Delivery do
   let(:app) { stub(:name => 'MyApp') }
   let(:notification) { stub.as_null_object }
   let(:logger) { stub(:error => nil, :info => nil) }
-  let(:config) { stub(:check_for_errors => true) }
+  let(:config) { stub(:check_for_errors => true, :store => :active_record) }
   let(:connection) { stub(:select => false, :write => nil, :reconnect => nil, :close => nil, :connect => nil) }
   let(:delivery) { Rapns::Daemon::Apns::Delivery.new(app, connection, notification) }
   let(:store) { stub(:mark_failed => nil, :mark_delivered => nil) }

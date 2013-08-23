@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_dependency "multi_json", "~> 1.0"
+  s.add_dependency "mongoid-autoinc"
   s.add_dependency "net-http-persistent"
 
   if defined? JRUBY_VERSION

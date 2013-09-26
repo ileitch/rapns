@@ -8,7 +8,7 @@ module Rapns
 
     has_many :notifications, :class_name => 'Rapns::Notification', :dependent => :destroy
 
-    validates :name, :presence => true, :uniqueness => { :scope => [:type, :environment] }
+    validates :name, :presence => true
     validates_numericality_of :connections, :greater_than => 0, :only_integer => true
   end
 end

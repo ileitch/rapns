@@ -8,6 +8,8 @@ require 'net/http/persistent'
 require 'rapns/daemon/reflectable'
 require 'rapns/daemon/interruptible_sleep'
 require 'rapns/daemon/delivery_error'
+require 'rapns/daemon/retryable_error'
+require 'rapns/daemon/too_many_requests_error'
 require 'rapns/daemon/delivery'
 require 'rapns/daemon/feeder'
 require 'rapns/daemon/batch'
@@ -26,6 +28,10 @@ require 'rapns/daemon/apns/feedback_receiver'
 require 'rapns/daemon/gcm/delivery'
 require 'rapns/daemon/gcm/app_runner'
 require 'rapns/daemon/gcm/delivery_handler'
+
+require 'rapns/daemon/adm/delivery'
+require 'rapns/daemon/adm/app_runner'
+require 'rapns/daemon/adm/delivery_handler'
 
 module Rapns
   module Daemon

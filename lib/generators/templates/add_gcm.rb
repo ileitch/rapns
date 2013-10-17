@@ -50,6 +50,10 @@ class AddGcm < ActiveRecord::Migration
     change_column :rapns_notifications, :app_id, :integer, :null => false
     remove_column :rapns_notifications, :app
 
+    #Note: If you're upgrading rapns, this index might be named instead "index_rapns_notifications_on_delivered_failed_deliver_after"
+    #In this case, uncomment this and comment the index_rapns_notifications_multi removal:
+    #  remove_index :rapns_notifications, :name => "index_rapns_notifications_on_delivered_failed_deliver_after"
+    #(do the same below, in the self.down method)
     remove_index :rapns_notifications, :name => "index_rapns_notifications_multi"
     add_index :rapns_notifications, [:app_id, :delivered, :failed, :deliver_after], :name => "index_rapns_notifications_multi"
   end
@@ -90,6 +94,9 @@ class AddGcm < ActiveRecord::Migration
     remove_column :rapns_notifications, :app_id
 
     remove_index :rapns_notifications, :name => "index_rapns_notifications_multi"
+
+    # (See above in the self.up method)
+    # add_index :rapns_notifications, [:delivered, :failed, :deliver_after], :name => "index_rapns_notifications_on_delivered_failed_deliver_after"
     add_index :rapns_notifications, [:delivered, :failed, :deliver_after], :name => "index_rapns_notifications_multi"
   end
 end

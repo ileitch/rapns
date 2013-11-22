@@ -40,6 +40,7 @@ If this is your first time using the APNs, you will need to generate SSL certifi
 ```ruby
 app = Rapns::Apns::App.new
 app.name = "ios_app"
+app.type = "Rapns::Apns::App"
 app.certificate = File.read("/path/to/sandbox.pem")
 app.environment = "sandbox" # APNs environment.
 app.password = "certificate password"
@@ -63,6 +64,7 @@ You should also implement the [apns_certificate_will_expire](https://github.com/
 ```ruby
 app = Rapns::Gcm::App.new
 app.name = "android_app"
+app.type = "Rapns::Gcm::App"
 app.auth_key = "..."
 app.connections = 1
 app.save!

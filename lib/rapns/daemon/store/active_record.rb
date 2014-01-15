@@ -1,5 +1,6 @@
 require 'active_record'
 
+require 'rapns/daemon/store/active_record/lock'
 require 'rapns/daemon/store/active_record/reconnectable'
 
 module Rapns
@@ -10,13 +11,34 @@ module Rapns
 
         DEFAULT_MARK_OPTIONS = {:persist => true}
 
+        def try_lock
+          # old_min_id, old_limit = 0
+
+          old_key = Lock.key
+          old_min_id, old_limit = Lock.parse_key(old_key)
+
+          relation = deliverable_notifications_relation
+          relation = relation.where(['id > ?', old_min_id + old_limit])
+          min_id = relation.minimum(:id)
+
+          return false unless min_id
+
+          batch_size = Rapns.config.batch_size
+          Lock.try_lock(old_key, Lock.build_key(min_id, batch_size))
+        end
+
         def deliverable_notifications(apps)
           with_database_reconnect_and_retry do
-            batch_size = Rapns.config.batch_size
-            relation = Rapns::Notification.ready_for_delivery.for_apps(apps)
-            relation = relation.limit(batch_size) unless Rapns.config.push
-            relation.to_a
+            deliverable_notifications_relation.for_apps(apps).to_a
           end
+        end
+
+        # TODO: Make this respect [apps]?
+        def deliverable_notifications_relation
+          batch_size = Rapns.config.batch_size
+          relation = Rapns::Notification.ready_for_delivery
+          relation = relation.limit(batch_size) unless Rapns.config.push
+          relation
         end
 
         def mark_retryable(notification, deliver_after, opts = {})

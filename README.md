@@ -102,6 +102,23 @@ n.save!
 
 For more documentation on [ADM](https://developer.amazon.com/sdk/adm.html).
 
+#### WPNS
+
+```ruby
+app = Rapns::Wpns::App.new
+app.name = "windows_phone_app"
+app.connections = 1
+app.save!
+```
+
+```ruby
+n = Rapns::Wpns::Notification.new
+n.app = Rapns::Wpns::App.find_by_name("windows_phone_app")
+n.uri = "http://..."
+n.alert = "..."
+n.save!
+```
+
 ## Starting Rapns
 
 As a daemon:

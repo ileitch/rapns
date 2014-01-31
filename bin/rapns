@@ -34,4 +34,6 @@ load 'config/initializers/rapns.rb' if File.exist?('config/initializers/rapns.rb
 
 Rapns.config.update(config)
 Rapns.require_for_daemon
+ActiveRecord::Base.logger = Rapns.logger if Rapns.config.intercept_active_record_logger
+
 Rapns::Daemon.start

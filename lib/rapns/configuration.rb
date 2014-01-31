@@ -9,7 +9,7 @@ module Rapns
 
   CONFIG_ATTRS = [:foreground, :push_poll, :feedback_poll, :embedded,
     :airbrake_notify, :check_for_errors, :pid_file, :batch_size,
-    :push, :store, :logger, :batch_storage_updates]
+    :push, :store, :logger, :batch_storage_updates, :intercept_active_record_logger]
 
   class ConfigurationWithoutDefaults < Struct.new(*CONFIG_ATTRS)
   end
@@ -80,6 +80,7 @@ module Rapns
       self.store = :active_record
       self.logger = nil
       self.batch_storage_updates = true
+      self.intercept_active_record_logger = false
 
       # Internal options.
       self.embedded = false

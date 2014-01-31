@@ -27,6 +27,14 @@ module Rapns
       log(:warn, msg, 'WARNING', STDERR)
     end
 
+    def debug(msg)
+      log(:debug, msg)
+    end
+
+    def debug?
+      Rails.configuration.log_level == :debug
+    end
+
     private
 
     def setup_logger(log)
